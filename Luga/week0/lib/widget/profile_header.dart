@@ -39,7 +39,7 @@ class ProfileHeader extends StatelessWidget {
 
         ElevatedButton(
             onPressed: () {}, // 1주차에는 기능 연결하지 않음
-            child: Text('프로필 수정', style: textTheme.labelLarge?.copyWith(color: Colors.white)),
+            child: Text('프로필 수정', style: textTheme.labelLarge?.copyWith(color: AppColors.primary)),
         ),
       ],
     );

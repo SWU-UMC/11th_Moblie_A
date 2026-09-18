@@ -21,7 +21,7 @@ class StatItem extends StatelessWidget {
         vertical: 12,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLowest,
+        color: AppColors.surfaceContainer,
         border: Border.all(color: AppColors.primaryContainer),
         borderRadius: BorderRadius.circular(12),
       ),

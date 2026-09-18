@@ -38,7 +38,7 @@ class _GenreChip extends StatelessWidget {
         return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(20),
             ),
             child: Text(label, style: textTheme.bodyMedium?.copyWith(color: AppColors.primary)),
