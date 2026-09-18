@@ -41,7 +41,7 @@ class _GenreChip extends StatelessWidget {
                 color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(label, style: textTheme.bodyMedium?.copyWith(color: AppColors.primary)),
+            child: Text(label, style: textTheme.titleMedium?.copyWith(color: AppColors.primary)),
         );
     }
 }
