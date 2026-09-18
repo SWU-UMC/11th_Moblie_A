@@ -1,4 +1,4 @@
-imoprt 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -9,7 +9,7 @@ class AppTheme {
     fontFamily: 'Manrope',
     scaffoldBackgroundColor: AppColors.surface,
 
-    colorScheme: const ColorScheme.fromSeed(
+    colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         surface: AppColors.surface,
@@ -18,7 +18,7 @@ class AppTheme {
 
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.surface,
-      foregroundColor: AppColors.black,
+      foregroundColor: Colors.black,
       elevation: 0,
       centerTitle: true,
     ),
@@ -31,7 +31,7 @@ class AppTheme {
 
     cardTheme: CardThemeData(
         color: Colors.white,
-        shpae: RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
     ),
