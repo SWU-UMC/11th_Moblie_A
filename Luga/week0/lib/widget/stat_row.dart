@@ -4,8 +4,6 @@ import 'stat_item.dart';
 class StatRow extends StatelessWidget {
   const StatRow({super.key});
 
-  final List<StatItem> stats;
-
   @override
   Widget build(BuildContext context) {
     return Row(

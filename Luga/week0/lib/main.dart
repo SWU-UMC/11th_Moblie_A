@@ -1,6 +1,7 @@
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
+import 'screen/profile_screen.dart';
 
 void main() => runApp(const MovieLogApp());
 

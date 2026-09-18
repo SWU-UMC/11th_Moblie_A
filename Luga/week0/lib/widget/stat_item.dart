@@ -26,7 +26,7 @@ class StatItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        maxAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(value, style: textTheme.titleLarge),

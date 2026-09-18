@@ -30,7 +30,7 @@ class AppTheme {
     ),
 
     textTheme: const TextTheme(
-      headLineSmall: TextStyle(
+      headlineSmall: TextStyle(
         fontFamily: 'Manrope', fontSize: 22, 
         fontWeight: FontWeight.bold, color: AppColors.textPrimary,
         ),
