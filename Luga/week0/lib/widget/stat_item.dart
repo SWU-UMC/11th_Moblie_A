@@ -16,15 +16,13 @@ class StatItem extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
-        border: Border.all(color: AppColors.primaryContainer),
-        borderRadius: BorderRadius.circular(12),
-      ),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            border: Border.all(color: AppColors.primaryContainer),
+            borderRadius: BorderRadius.circular(12),
+        ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
