@@ -21,12 +21,35 @@ class AppTheme {
       foregroundColor: Colors.black,
       elevation: 0,
       centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontFamily: 'Manrope',
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: AppColors.primary,
+      ),
     ),
 
     textTheme: const TextTheme(
-        bodyLarge: TextStyle(fontFamily: 'Manrope'),
-        bodyMedium: TextStyle(fontFamily: 'Manrope'),
-        titleLarge: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold),
+      headLineSmall: TextStyle(
+        fontFamily: 'Manrope', fontSize: 22, 
+        fontWeight: FontWeight.bold, color: AppColors.textPrimary,
+        ),
+      titleLarge: TextStyle(
+        fontFamily: 'Manrope', fontSize: 20,
+        fontWeight: FontWeight.bold, color: AppColors.textPrimary,
+        ),
+      titleMedium: TextStyle(
+        fontFamily: 'Manrope', fontSize: 16,
+        fontWeight: FontWeight.w600, color: AppColors.textPrimary,
+        ),
+      bodyMedium: TextStyle(
+        fontFamily: 'Manrope', fontSize: 14,
+        color: AppColors.textSecondary,
+        ),
+      labelLarge: TextStyle(
+        fontFamily: 'Manrope', fontSize: 14,
+        fontWeight: FontWeight.w600, color: AppColors.primary,
+      ),
     ),
 
     cardTheme: CardThemeData(
