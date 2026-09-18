@@ -22,7 +22,7 @@ class ProfileHeader extends StatelessWidget {
 
             child: ClipOval(
                 child: Image.asset(
-                    'assets/images/profile.png',
+                    'assets/images/profile/profile_movielog.png',
                     fit: BoxFit.cover,
                 ),
             ),
