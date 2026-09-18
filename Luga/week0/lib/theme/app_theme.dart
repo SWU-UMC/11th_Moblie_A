@@ -20,7 +20,7 @@ class AppTheme {
       backgroundColor: AppColors.surface,
       foregroundColor: Colors.black,
       elevation: 0,
-      centerTitle: true,
+      centerTitle: false,
       titleTextStyle: TextStyle(
         fontFamily: 'Manrope',
         fontSize: 18,
@@ -61,8 +61,8 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),

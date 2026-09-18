@@ -29,9 +29,9 @@ class StatItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(value, style: textTheme.titleLarge),
-          const SizedBox(height: 4),
-          Text(label, style: textTheme.bodyMedium),
+            Text(label, style: textTheme.bodyMedium),
+            const SizedBox(height: 4),
+            Text(value, style: textTheme.titleLarge?.copyWith(color: AppColors.primary)),
         ],
       ),
     );
