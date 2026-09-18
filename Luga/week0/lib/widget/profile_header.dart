@@ -8,38 +8,38 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Row(
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const CircleAvatar(
-            radius: 32,
-            backgroundImage: AssetImage('assets/images/profile.png'),
+        Container(
+            width: 96, height: 96,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 2),
             ),
-        const SizedBox(width: 16),
 
-        Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '무비러버',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '좋아하는 영화를 기록하고 있어요',
-                    style: textTheme.bodyMedium,
-                  ),
-                ],
+            child: ClipOval(
+                child: Image.asset(
+                    'assets/images/profile.png',
+                    fit: BoxFit.cover,
+                ),
             ),
         ),
+        const SizedBox(height: 16),
 
-        SvgPicture.asset(
-          'assets/icons/bookmark.svg',
-          width: 24,
-          height: 24,
-          ),
+        Text('무비러버', style: textTheme.titleLarge),
+        const SizedBox(height: 8),
+
+        Text('매주 주말엔 영화관으로 출근하는 프로 관람객.\n좋은 영화를 보고 기록하는 것을 좋아합니다.',
+        textAlign: TextAlign.center, style: textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 16),
+
+        ElevatedButton(
+            onPressed: () {}, // 1주차에는 기능 연결하지 않음
+            child: Text('프로필 수정', style: textTheme.labelLarge?.copyWith(color: Colors.white)),
+        ),
       ],
     );
   }

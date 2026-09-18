@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '.../theme/app_colors.dart';
+
 class StatItem extends StatelessWidget {
   const StatItem({
     super.key,
@@ -10,7 +13,6 @@ class StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
@@ -19,15 +21,17 @@ class StatItem extends StatelessWidget {
         vertical: 12,
       ),
       decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(color: colors.primary),
+        color: AppColors.surfaceLowest,
+        border: Border.all(color: AppColors.primaryContainer),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        maxAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(value, style: textTheme.titleLarge),
           const SizedBox(height: 4),
-          Text(label),
+          Text(label, style: textTheme.bodyMedium),
         ],
       ),
     );
