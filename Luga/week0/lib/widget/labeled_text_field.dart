@@ -47,6 +47,6 @@ class LabeledTextField extends StatelessWidget {
                     FocusScope.of(context).unfocus();
                 }
             },
-        )
+        );
     }
 }

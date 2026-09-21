@@ -13,7 +13,7 @@ class TermsCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-        maxAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
             Checkbox(value: value, onChanged: onChanged),
