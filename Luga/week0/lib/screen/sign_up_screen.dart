@@ -3,6 +3,7 @@ import '../widget/labeled_text_field.dart';
 import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
 import '../theme/app_colors.dart';
+import '../widget/common_app_bar.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -170,7 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     text: TextSpan(
                                         style: textTheme.bodyMedium,
                                         children: [
-                                            const TextSpan(text: '이미 계정이 있나요?'),
+                                            const TextSpan(text: '이미 계정이 있나요?\u00A0'),
                                             TextSpan(
                                                 text: '로그인',
                                                 style: textTheme.bodyMedium?.copyWith(

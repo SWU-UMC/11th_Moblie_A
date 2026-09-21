@@ -67,10 +67,13 @@ class LabeledTextField extends StatelessWidget {
               },
               decoration: InputDecoration(
                 hintText: hintText,
+                hintStyle: const TextStyle(fontSize: 14),
+                isDense: false,
                 filled: true,
                 fillColor: hasError
                     ? AppColors.errorBackground
                     : AppColors.surfaceContainer,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 suffixIcon: hasError
                     ? const Icon(Icons.error, color: AppColors.error)
                     : (isValid
