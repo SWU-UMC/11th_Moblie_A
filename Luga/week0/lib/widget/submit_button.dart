@@ -16,10 +16,13 @@ class SubmitButton extends StatelessWidget {
         return ElevatedButton(
             onPressed: enabled ? onPressed : null,
             style: ElevatedButton.styleFrom(
-                backgroundColor: enabled ? AppColors.primary : AppColors.outline,
+                backgroundColor: enabled ? AppColors.primary : AppColors.primaryContainer,
+                disabledBackgroundColor: AppColors.primaryContainer,
                 foregroundColor: Colors.white,
-                minimumSize: const Size(0, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                disabledForegroundColor: Colors.white,
+                minimumSize: const Size(0, 52),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('가입하기'),
         );

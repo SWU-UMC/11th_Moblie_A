@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widget/labeled_text_field.dart';
 import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
+import '../theme/app_colors.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -62,6 +63,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     @override
     Widget build(BuildContext context) {
+        final textTheme = Theme.of(context).textTheme;
+
         return Scaffold(
             appBar: AppBar(title: const Text('회원가입')),
             body: SafeArea(
@@ -76,13 +79,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                                Text(
+                                    '환영합니다!\n간단한 정보만 입력하고 시작해보세요.', 
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 32),
+
                                 // 닉네임 입력 필드
                                 LabeledTextField(
                                     controller: _nicknameController,
                                     focusNode: _nicknameFocusNode,
                                     nextFocusNode: _emailFocusNode,
                                     labelText: '닉네임',
-                                    hintText: '2자 이상 입력하세요',
+                                    hintText: '닉네임을 입력해주세요',
                                     validator: (value) {
                                         if (value == null || value.isEmpty) {
                                             return '닉네임을 입력해주세요';
@@ -94,7 +104,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     },
                                     onChanged: (_) => setState(() {}),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 20),
 
                                 // 이메일 입력 필드
                                 LabeledTextField(
@@ -102,27 +112,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     focusNode: _emailFocusNode,
                                     nextFocusNode: _passwordFocusNode,
                                     labelText: '이메일',
-                                    hintText: 'example@email.com',
+                                    hintText: '이메일 주소를 입력해주세요',
                                     keyboardType: TextInputType.emailAddress,
                                     validator: (value) {
                                         if (value == null || value.trim().isEmpty) {
                                             return '이메일을 입력해주세요';
                                         }
                                         if (!_isEmailValid(value.trim())) {
-                                            return '올바른 이메일 형식이 아니에요';
+                                            return '올바른 이메일 형식이 아닙니다';
                                         }
                                         return null;
                                     },
                                     onChanged: (_) => setState(() {}),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 20),
 
                                 // 비밀번호 입력 필드
                                 LabeledTextField(
                                     controller: _passwordController,
                                     focusNode: _passwordFocusNode,
                                     labelText: '비밀번호',
-                                    hintText: '8자 이상 입력하세요',
+                                    hintText: '비밀번호를 입력해주세',
                                     obscureText: true,
                                     textInputAction: TextInputAction.done,
                                     validator: (value) {
@@ -136,7 +146,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     },
                                     onChanged: (_) => setState(() {}),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 32),
 
                                 TermsCheckbox(
                                     value: _agreedToTerms,
@@ -151,6 +161,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 SubmitButton(
                                     enabled: _isFormValid,
                                     onPressed: _handleSubmit,
+                                ),
+                                const SizedBox(height: 24),
+
+                                // 하단 로그인 링크
+                                RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                        style: textTheme.bodyMedium,
+                                        children: [
+                                            const TextSpan(text: '이미 계정이 있나요?'),
+                                            TextSpan(
+                                                text: '로그인',
+                                                style: textTheme.bodyMedium?.copyWith(
+                                                    color: AppColors.primary,
+                                                    fontWeight: FontWeight.bold,
+                                                ),
+                                                // 화면 전환은 구현 X
+                                            ),
+                                        ],
+                                    ),
                                 ),
                             ],
                         ),
