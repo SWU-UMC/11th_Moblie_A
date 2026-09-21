@@ -29,7 +29,7 @@ class LabeledTextField extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
         return TextFormField(
-            consroller: controller,
+            controller: controller,
             focusNode: focusNode,
             obscureText: obscureText,
             keyboardType: keyboardType,
@@ -47,6 +47,6 @@ class LabeledTextField extends StatelessWidget {
                     FocusScope.of(context).unfocus();
                 }
             },
-        );
+        )
     }
 }
