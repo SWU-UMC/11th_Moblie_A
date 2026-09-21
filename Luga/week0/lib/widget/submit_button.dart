@@ -22,6 +22,7 @@ class SubmitButton extends StatelessWidget {
                 disabledForegroundColor: Colors.white,
                 minimumSize: const Size(0, 52),
                 elevation: 0,
+                side: BorderSide.none,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('가입하기'),
