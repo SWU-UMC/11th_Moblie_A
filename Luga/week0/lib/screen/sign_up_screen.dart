@@ -66,7 +66,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final textTheme = Theme.of(context).textTheme;
 
         return Scaffold(
-            appBar: AppBar(title: const Text('회원가입')),
+            appBar: const CommonAppBar(title: '회원가입', showBackButton: true),
             body: SafeArea(
                 child: SingleChildScrollView(
                     padding: EdgeInsets.only(
