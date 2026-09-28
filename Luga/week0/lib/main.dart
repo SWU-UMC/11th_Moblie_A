@@ -8,10 +8,10 @@ void main() => runApp(const MovieLogApp());
 class MovieLogApp extends StatelessWidget {
   const MovieLogApp({super.key});
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  Widget build(BuildContext context) => MaterialApp.router(
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light,
-    home: const SignUpScreen(),
+    routerConfig: AppRouter.router,
   );
 }
 
