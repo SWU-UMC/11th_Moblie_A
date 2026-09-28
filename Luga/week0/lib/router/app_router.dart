@@ -1,16 +1,23 @@
+import 'package:go_router/go_router.dart';
+import '../screen/home_screen.dart';
+import '../screen/movie_detail_screen.dart';
+
 class AppRouter {
   AppRouter._();
 
   static final router = GoRouter(
-    initialLocation: '/start',
+    initialLocation: '/home',
     routes: [
       GoRoute(
-        path: '/start',
-        builder: (context, state) => const StartScreen(),
+        path: '/home',
+        builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
-        path: '/register',
-        builder: (context, state) => const SignUpScreen(),
+        path: '/movies/:movieId',
+        builder: (context, state) {
+          final movieId = int.tryParse(state.pathParameters['movieId'] ?? '');
+          return MovieDetailScreen(movieId: movieId ?? -1);
+        },
       ),
     ],
   );
