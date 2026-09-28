@@ -1,5 +1,6 @@
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
+import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 import 'screen/sign_up_screen.dart';
 

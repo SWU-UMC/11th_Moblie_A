@@ -13,7 +13,7 @@ class MovieCard extends StatelessWidget {
         final textTheme = Theme.of(context).textTheme;
 
         return GestureDetector(
-            behavior: HitTestBehaivor.opaque,
+            behavior: HitTestBehavior.opaque,
             onTap: () => context.push('/movies/${movie.id}'),
             child: Container(
                 decoration: BoxDecoration(
@@ -47,7 +47,7 @@ class MovieCard extends StatelessWidget {
                                     Text(
                                         movie.title,
                                         maxLines: 1,
-                                        overflow: TextOverflow.ellopsis,
+                                        overflow: TextOverflow.ellipsis,
                                         style: textTheme.titleMedium,
                                     ),
                                     const SizedBox(height: 4),

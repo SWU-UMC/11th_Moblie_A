@@ -11,9 +11,9 @@ class MovieDetailScreen extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
         final movie = findMovieById(movieId);
-        finla textTheme = Theme.of(context).textTheme;
+        final textTheme = Theme.of(context).textTheme;
 
-        if(moive == null) {
+        if(movie == null) {
             return Scaffold(
                 appBar: const CommonAppBar(title: '영화 상세', showBackButton: true),
                 body: const Center(child: Text('영화를 찾을 수 없습니다.')),
@@ -32,7 +32,7 @@ class MovieDetailScreen extends StatelessWidget {
                             child: Container(
                                 decoration: BoxDecoration(
                                     color: AppColors.primaryLight,
-                                    borderRadius: BorderRadius.corcular(12),
+                                    borderRadius: BorderRadius.circular(12),
                                 ),
                                 clipBehavior: Clip.antiAlias,
                                 child: Image.asset(
