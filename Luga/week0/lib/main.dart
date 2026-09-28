@@ -7,9 +7,11 @@ void main() => runApp(const MovieLogApp());
 
 class MovieLogApp extends StatelessWidget {
   const MovieLogApp({super.key});
+
   @override
   Widget build(BuildContext context) => MaterialApp.router(
     debugShowCheckedModeBanner: false,
+    title: 'MovieLog',
     theme: AppTheme.light,
     routerConfig: AppRouter.router,
   );

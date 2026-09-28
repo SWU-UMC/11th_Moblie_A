@@ -16,7 +16,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: showBackButton
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () {}, // 1주차에는 화면 전환을 구현하지 않습니다.
+              onPressed: () => context.pop(),
             )
           : null,
       title: Text(title),
