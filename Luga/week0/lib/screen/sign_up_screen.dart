@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widget/labeled_text_field.dart';
 import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
@@ -42,14 +43,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _handleSubmit() {
-    final isValid = _formKey.currentState!.validate();
-    if (isValid && _agreedToTerms) {
-      // 실제 가입 로직은 아직 구현 X
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('가입 요청이 전송되었습니다.')),
-      );
-    }
+  final isValid = _formKey.currentState!.validate();
+  if (isValid && _agreedToTerms) {
+    context.pushReplacement('/home');
   }
+}
 
   @override
   void dispose() {

@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'movie_rating_input.dart';
+
 class RatingDialog extends StatefulWidget {
   const RatingDialog({super.key});
 
@@ -20,18 +23,17 @@ class _RatingDialogState extends State<RatingDialog> {
               '영화는 어떠셨나요?',
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+                fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 24),
-						MovieRatingInput(
-						  rating: rating,
-						  onChanged: (value) {
-						    setState(() {
-						      rating = value;
-						    });
-						  },
-						),
+            MovieRatingInput(
+                rating: rating,
+				onChanged: (value) {
+                    setState(() {
+                        rating = value;
+					});
+                },
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
