@@ -20,7 +20,7 @@ class AppTheme {
       backgroundColor: AppColors.surface,
       foregroundColor: Colors.black,
       elevation: 0,
-      centerTitle: false,
+      centerTitle: true,
       titleTextStyle: TextStyle(
         fontFamily: 'Manrope',
         fontSize: 18,

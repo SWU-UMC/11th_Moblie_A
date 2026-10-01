@@ -15,4 +15,8 @@ class AppColors {
   static const Color textPrimary = Color(0xFF1B1C1A); // neutral 900 - 제목, 진한 텍스트
   static const Color textSecondary = Color(0xFF7A7582); // neutral 800 - 본문, 설명 텍스트
   static const Color outline = Color(0xFFE3E2DF); // neutral 600 - 테두리, 구분선
+
+  // 유효성 검사
+  static const Color errorBackground = Color(0xFFFFDAD6); // 입력 오류 시 textfield 배경색
+  static const Color error = Color(0xFFB3261E); // 입력 오류 시 경고 텍스트 색상
 }
