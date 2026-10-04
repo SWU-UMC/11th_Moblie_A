@@ -3,6 +3,7 @@ import '../widget/profile_header.dart';
 import '../widget/genre_section.dart';
 import '../widget/stat_row.dart';
 import '../widget/common_app_bar.dart';
+import '../widget/responsive_container.dart';
 
 class ProfileScreen extends StatelessWidget {
     const ProfileScreen({super.key});
@@ -12,20 +13,22 @@ class ProfileScreen extends StatelessWidget {
         return Scaffold(
             appBar: const CommonAppBar(title: '내 프로필', centerTitle: false),
             body: SafeArea(
-                child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: const [
-                            ProfileHeader(),
-                            SizedBox(height: 32),
-                            StatRow(),
-                            SizedBox(height: 32),
-                            Align(
-                                alignment: Alignment.centerLeft,
-                                child: GenreSection(),
-                            ),
-                        ],
+                child: ResponsiveContainer(
+                    child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: const [
+                                ProfileHeader(),
+                                SizedBox(height: 32),
+                                StatRow(),
+                                SizedBox(height: 32),
+                                Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: GenreSection(),
+                                ),
+                            ],
+                        ),
                     ),
                 ),
             ),

@@ -19,7 +19,7 @@ class StatItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-            color: AppColors.surfaceContainer,
+            color: AppColors.primaryLight,
             border: Border.all(color: AppColors.primaryContainer),
             borderRadius: BorderRadius.circular(12),
         ),

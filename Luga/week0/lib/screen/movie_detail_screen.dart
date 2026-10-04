@@ -22,6 +22,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         setState(() {
             _isFavorite = !_isFavorite;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(_isFavorite ? '즐겨찾기에 추가했습니다' : '즐겨찾기에서 삭제했습니다'),
@@ -53,7 +54,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
         if(movie == null) {
             return Scaffold(
-                appBar: const CommonAppBar(title: '영화 상세', showBackButton: true),
+                appBar: CommonAppBar(title: '영화 상세', showBackButton: true),
                 body: const Center(child: Text('영화를 찾을 수 없습니다')),
             );
         }
@@ -96,14 +97,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                             const SizedBox(height: 12),
 
                                             // 평점 (읽기 전용)
-                                            Row(
+                                            Wrap(
+                                                crossAxisAlignment: WrapCrossAlignment.center,
                                                 children: [
                                                     RatingBarIndicator(
                                                         rating: movie.rating,
                                                         itemCount: 5,
                                                         itemSize: 20,
                                                         itemBuilder: (context, index) {
-                                                            return const Icon(Icons.star, color: Colors.amber);
+                                                            return const Icon(Icons.star, color: Colors.white);
                                                         },
                                                     ),
                                                     const SizedBox(width: 8),
@@ -160,27 +162,45 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         child: Row(
                             children: [
                                 Expanded(
-                                    child: OutlinedButton.icon(
+                                    child: OutlinedButton(
                                         onPressed: _toggleFavorite,
-                                        icon: Icon(_isFavorite ? Icons.bookmark : Icons.bookmark_border),
-                                        label: const Text('즐겨찾기'),
                                         style: OutlinedButton.styleFrom(
                                             foregroundColor: AppColors.primary,
                                             side: const BorderSide(color: AppColors.primary),
-                                            minimumSize: const Size.fromHeight(40, 8),
+                                            minimumSize: const Size(0, 48),
+                                        ),
+                                        child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                    Icon(_isFavorite ? Icons.bookmark : Icons.bookmark_border),
+                                                    const SizedBox(width: 6),
+                                                    const Text('즐겨찾기'),
+                                                ],
+                                            ),
                                         ),
                                     ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                    child: ElevatedButton.icon(
+                                    child: ElevatedButton(
                                         onPressed: _openRatingDialog,
-                                        icon: const Icon(Icons.edit),
-                                        label: const Text('평점 남기기'),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor: AppColors.primary,
                                             foregroundColor: Colors.white,
-                                            minimumSize: const Size.fromHeight(0, 48),
+                                            minimumSize: const Size(0, 48),
+                                        ),
+                                        child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: const [
+                                                    Icon(Icons.edit),
+                                                    SizedBox(width: 6),
+                                                    Text('평점 남기기'),
+                                                ],
+                                            ),
                                         ),
                                     ),
                                 ),

@@ -65,7 +65,7 @@ const movies = [
     genre: '스릴러',
     genreTags: ['스릴러'],
     year: 2024,
-    posterAsset: 'assets/images/posters/134004 poster_night_shadows.jpg',
+    posterAsset: 'assets/images/posters/poster_night_shadows.jpg',
     rating: 3.8,
   ),
   Movie(

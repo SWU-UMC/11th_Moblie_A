@@ -6,7 +6,7 @@ import '../screen/home_screen.dart';
 import '../screen/movie_list_screen.dart';
 import '../screen/movie_detail_screen.dart';
 import '../screen/profile_screen.dart';
-import '../widget/main_screen.dart';
+import '../screen/main_screen.dart';
 
 class AppRouter {
   AppRouter._();

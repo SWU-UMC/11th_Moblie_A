@@ -76,5 +76,24 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
         ),
     ),
+
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.surfaceLowest,
+      indicatorColor: AppColors.primaryLight,
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return TextStyle(
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          color: selected ? AppColors.primary : AppColors.textSecondary,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(
+          color: selected ? AppColors.primary : AppColors.textSecondary,
+        );
+      }),
+    ),
   );
 }

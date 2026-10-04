@@ -17,14 +17,14 @@ class _MovieListScreenState extends State<MovieListScreen> {
     List<String> get _genres {
         final set = <String>{};
         for(final movie in movies) {
-            set.add(movie.genre);
+            set.addAll(movie.genreTags);
         }
         return set.toList();
     }
 
     List<Movie> get _filteredMovies {
         if(_selectedGenre == null) return movies;
-        return movies.where((m) => m.genre == _selectedGenre).toList();
+        return movies.where((m) => m.genreTags.contains(_selectedGenre)).toList();
     }
 
     @override
@@ -44,7 +44,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                                     children: [
                                         Text('영화', style: textTheme.titleLarge?.copyWith(color: AppColors.primary)),
                                         GestureDetector(
-                                            onPressed: () {},
+                                            onTap: () {},
                                             child: const Icon(Icons.search),
                                         ),
                                     ],
@@ -52,41 +52,44 @@ class _MovieListScreenState extends State<MovieListScreen> {
                             ),
 
                             // 장르 칩
-                            SizedBox(
-                                height: 48,
-                                child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                                    itemCount: _genres.length + 1,
-                                    separatorBuilder: (context, index) => const SizedBox(width: 8),
-                                    itemBuilder: (context, index) {
-                                        final isAll = index == 0;
-                                        final genre = isAll ? null : _genres[index - 1];
-                                        final label = isAll ? '전체' : genre!;
-                                        final isSelected = _selectedGenre == genre;
+                            Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: SizedBox(
+                                    height: 40,
+                                    child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        // padding: const EdgeInsets.symmetric(horizontal: 24),
+                                        itemCount: _genres.length + 1,
+                                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                                        itemBuilder: (context, index) {
+                                            final isAll = index == 0;
+                                            final genre = isAll ? null : _genres[index - 1];
+                                            final label = isAll ? '전체' : genre!;
+                                            final isSelected = _selectedGenre == genre;
 
-                                        return ChoiceChip(
-                                            label: Text(label),
-                                            selected: isSelected,
-                                            showCheckmark: false, // 선택 시 체크마크 제거
-                                            onSelected: (_) {
-                                                setState(() {
-                                                    _selectedGenre = genre;
-                                                });
-                                            },
-                                            selectedColor: AppColors.primary,
-                                            labelStyle: TextStyle(
-                                                color: selected ? Colors.white : AppColors.textPrimary,
-                                                fontWeight: FontWeight.w600,
-                                            ),
-                                            backgroundColor: AppColors.surfaceContainer,
-                                            shape: const StadiumBorder(),
-                                            side: BorderSide.none,
-                                        );
-                                    },
+                                            return ChoiceChip(
+                                                label: Text(label, overflow: TextOverflow.visible, softWrap: false),
+                                                selected: isSelected,
+                                                showCheckmark: false, // 선택 시 체크마크 제거
+                                                onSelected: (_) {
+                                                    setState(() {
+                                                        _selectedGenre = genre;
+                                                    });
+                                                },
+                                                selectedColor: AppColors.primary,
+                                                labelStyle: TextStyle(
+                                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                                    fontWeight: FontWeight.w600,
+                                                ),
+                                                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                                                backgroundColor: AppColors.primaryLight,
+                                                shape: const StadiumBorder(),
+                                                side: BorderSide.none,
+                                            );
+                                        },
+                                    ),
                                 ),
                             ),
-                            const SizedBox(height: 16),
 
                             Expanded(
                                 child: _filteredMovies.isEmpty
