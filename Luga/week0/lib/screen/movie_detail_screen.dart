@@ -227,8 +227,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: const [
                                                     Icon(Icons.edit),
-                                                    const SizedBox(width: 6),
-                                                    const Text('평점 남기기'),
+                                                    SizedBox(width: 6),
+                                                    Text('평점 남기기'),
                                                 ],
                                             ),
                                         ),

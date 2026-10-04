@@ -23,7 +23,7 @@ class _RatingDialogState extends State<RatingDialog> {
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
