@@ -19,4 +19,7 @@ class AppColors {
   // 유효성 검사
   static const Color errorBackground = Color(0xFFFFDAD6); // 입력 오류 시 textfield 배경색
   static const Color error = Color(0xFFB3261E); // 입력 오류 시 경고 텍스트 색상
+
+  // 읽기 전용 장르 칩 배경색
+  static const Color genreChipBackground = Color(0xFFE3E2DF);
 }

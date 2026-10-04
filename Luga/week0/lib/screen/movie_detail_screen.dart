@@ -23,6 +23,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             _isFavorite = !_isFavorite;
         });
 
+        // 기존 스낵바를 닫아 레이아웃 및 렌더링 꼬임 방지
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(_isFavorite ? '즐겨찾기에 추가했습니다' : '즐겨찾기에서 삭제했습니다'),
@@ -60,7 +62,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         }
 
         return Scaffold(
-            appBar: CommonAppBar(title: 'Cinema Archive', showBackButton: true),
+            appBar: CommonAppBar(
+                title: 'Cinema Archive',
+                showBackButton: true,
+                actions: [
+                    IconButton(
+                        icon: const Icon(Icons.share),
+                        onPressed: () {},
+                    ),
+                ],
+            ),
             body: SafeArea(
                 child: ResponsiveContainer(
                     child: SingleChildScrollView(
@@ -83,11 +94,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                     ),
                                 ),
                                 Padding(
-                                    padding: const EdgeInsets.all(24),
+                                    padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 40),
                                     child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                            Text(movie.title, style: textTheme.titleLarge),
+                                            Text(movie.title, style: textTheme.headlineMedium),
                                             const SizedBox(height: 8),
                                             Text(
                                                 '${movie.year} · ${movie.genreTags.join('/')}'
@@ -105,7 +116,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                                         itemCount: 5,
                                                         itemSize: 20,
                                                         itemBuilder: (context, index) {
-                                                            return const Icon(Icons.star, color: Colors.white);
+                                                            return const Icon(Icons.star, color: AppColors.primary);
                                                         },
                                                     ),
                                                     const SizedBox(width: 8),
@@ -122,25 +133,37 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                                     return Container(
                                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                                         decoration: BoxDecoration(
-                                                            color: AppColors.primaryLight,
+                                                            color: AppColors.genreChipBackground,
                                                             borderRadius: BorderRadius.circular(20),
                                                         ),
                                                         child: Text(
                                                             tag,
-                                                            style: textTheme.bodyMedium?.copyWith(color:AppColors.primary),
+                                                            style: textTheme.bodyMedium?.copyWith(color:AppColors.textPrimary),
                                                         ),
                                                     );
                                                 }).toList(),
                                             ),
-                                            const SizedBox(height: 24),
+                                        ],
+                                    ),
+                                ),
+                                // 구분선
+                                const Divider(
+                                    height: 1,
+                                    thickness: 0.5,
+                                    color: AppColors.primary,
+                                ),
 
-                                            Text('시놉시스', style: textTheme.titleMedium),
+                                Padding(
+                                    padding: const EdgeInsets.only(left: 24, right: 24, top: 16, bottom: 24),
+                                    child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                            Text('시놉시스', style: textTheme.headlineSmall),
                                             const SizedBox(height: 12),
                                             Text(
-                                                movie.synopsis ?? '아직 등록된 줄거리가 없습니다.',
+                                                movie.synopsis?.split('\n').map((line) => line.trim()).join('\n') ?? '아직 등록된 줄거리가 없습니다.',
                                                 style: textTheme.bodyMedium,
                                             ),
-                                            const SizedBox(height: 16),
                                         ],
                                     ),
                                 ),
@@ -149,10 +172,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     ),
                 ),
             ),
-            // 하단 NavigationBar 자리를 즐겨찾기/평점 버튼이 대신 차지
-            bottomNavigationBar: SafeArea(
-                top: false,
-                child: ResponsiveContainer(
+            // ResponsiveContainer 제거하여 하단 영역 레이아웃 제약 오류 해결
+            bottomNavigationBar: Container(
+                color: AppColors.surfaceLowest,
+                child: SafeArea(
+                    top: false,
                     child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -168,6 +192,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                             foregroundColor: AppColors.primary,
                                             side: const BorderSide(color: AppColors.primary),
                                             minimumSize: const Size(0, 48),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(24),
+                                            ),
                                         ),
                                         child: FittedBox(
                                             fit: BoxFit.scaleDown,
@@ -190,6 +217,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                             backgroundColor: AppColors.primary,
                                             foregroundColor: Colors.white,
                                             minimumSize: const Size(0, 48),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(24),
+                                            ),
                                         ),
                                         child: FittedBox(
                                             fit: BoxFit.scaleDown,
@@ -197,8 +227,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: const [
                                                     Icon(Icons.edit),
-                                                    SizedBox(width: 6),
-                                                    Text('평점 남기기'),
+                                                    const SizedBox(width: 6),
+                                                    const Text('평점 남기기'),
                                                 ],
                                             ),
                                         ),

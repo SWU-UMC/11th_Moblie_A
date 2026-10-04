@@ -7,11 +7,13 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.showBackButton = false,
     this.centerTitle,
+    this.actions,
   });
 
   final String title;
   final bool showBackButton;
   final bool? centerTitle;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: Text(title),
+      actions: actions,
     );
   }
 
