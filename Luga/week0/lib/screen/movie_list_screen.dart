@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../model/movie.dart';
 import '../widget/movie_card.dart';
-import '../widget/common_app_bar.dart';
+import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
 
 class MovieListScreen extends StatefulWidget {
@@ -32,65 +32,84 @@ class _MovieListScreenState extends State<MovieListScreen> {
         final textTheme = Theme.of(context).textTheme;
 
         return Scaffold(
-            appBar: const CommonAppBar(title: '영화'),
-            body: Column(
-                children: [
-                    // 장르 칩
-                    SizedBox(
-                        height: 48,
-                        child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                            itemCount: _genres.length + 1,
-                            separatorBuilder: (context, index) => const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                                final isAll = index == 0;
-                                final genre = isAll ? null : _genres[index - 1];
-                                final label = isAll ? '전체' : genre!;
-                                final selected = _selectedGenre == genre;
-
-                                return ChoiceChip(
-                                    label: Text(label),
-                                    selected: selected,
-                                    onSelected: (_) {
-                                        setState(() {
-                                            _selectedGenre = genre;
-                                        });
-                                    },
-                                    selectedColor: AppColors.primary,
-                                    labelStyle: TextStyle(
-                                        color: selected ? Colors.white : AppColors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                    ),
-                                    backgroundColor: AppColors.surfaceContainer,
-                                    shape: const StadiumBorder(),
-                                    side: BorderSide.none,
-                                );
-                            },
-                        ),
-                    ),
-
-                    // 영화 목록 (GridView)
-                    Expanded(
-                        child: _filteredMovies.isEmpty
-                            ? Center(
-                                child: Text('해당 장르의 영화가 없어요', style: textTheme.bodyMedium),
-                            )
-                            : GridView.builder(
+            body: SafeArea(
+                child: ResponsiveContainer(
+                    child: Column(
+                        children: [
+                            // 홈 화면과 동일한 스타일의 커스텀 헤더
+                            Padding(
                                 padding: const EdgeInsets.all(24),
-                                itemCount: _filteredMovies.length,
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 16,
-                                    mainAxisSpacing: 20,
-                                    childAspectRatio: 0.6,
+                                child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                        Text('영화', style: textTheme.titleLarge?.copyWith(color: AppColors.primary)),
+                                        GestureDetector(
+                                            onPressed: () {},
+                                            child: const Icon(Icons.search),
+                                        ),
+                                    ],
                                 ),
-                                itemBuilder: (context, index) {
-                                    return MovieCard(movie: _filteredMovies[index]);
-                                },
                             ),
+
+                            // 장르 칩
+                            SizedBox(
+                                height: 48,
+                                child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                                    itemCount: _genres.length + 1,
+                                    separatorBuilder: (context, index) => const SizedBox(width: 8),
+                                    itemBuilder: (context, index) {
+                                        final isAll = index == 0;
+                                        final genre = isAll ? null : _genres[index - 1];
+                                        final label = isAll ? '전체' : genre!;
+                                        final isSelected = _selectedGenre == genre;
+
+                                        return ChoiceChip(
+                                            label: Text(label),
+                                            selected: isSelected,
+                                            showCheckmark: false, // 선택 시 체크마크 제거
+                                            onSelected: (_) {
+                                                setState(() {
+                                                    _selectedGenre = genre;
+                                                });
+                                            },
+                                            selectedColor: AppColors.primary,
+                                            labelStyle: TextStyle(
+                                                color: selected ? Colors.white : AppColors.textPrimary,
+                                                fontWeight: FontWeight.w600,
+                                            ),
+                                            backgroundColor: AppColors.surfaceContainer,
+                                            shape: const StadiumBorder(),
+                                            side: BorderSide.none,
+                                        );
+                                    },
+                                ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            Expanded(
+                                child: _filteredMovies.isEmpty
+                                    ? Center(
+                                        child: Text('선택한 장르의 영화가 없습니다.', style: textTheme.bodyMedium),
+                                    )
+                                    : GridView.builder(
+                                        padding: const EdgeInsets.all(24),
+                                        itemCount: _filteredMovies.length,
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            mainAxisSpacing: 20,
+                                            crossAxisSpacing: 16,
+                                            childAspectRatio: 0.55,
+                                        ),
+                                        itemBuilder: (context, index) {
+                                            return MovieCard(movie: _filteredMovies[index]);
+                                        },
+                                    ),
+                            ),
+                        ],
                     ),
-                ],
+                ),
             ),
         );
     }

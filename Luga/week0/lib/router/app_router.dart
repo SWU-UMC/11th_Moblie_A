@@ -6,17 +6,17 @@ import '../screen/home_screen.dart';
 import '../screen/movie_list_screen.dart';
 import '../screen/movie_detail_screen.dart';
 import '../screen/profile_screen.dart';
-import '../screen/main_screen.dart';
+import '../widget/main_screen.dart';
 
 class AppRouter {
   AppRouter._();
 
   static final router = GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/start',
     routes: [
       GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        path: '/start',
+        builder: (context, state) => const StartScreen(),
       ),
       GoRoute(
         path: '/signup',
@@ -24,6 +24,14 @@ class AppRouter {
           canPop: false,
           child: const SignUpScreen(),
         ),
+      ),
+      // 상세 화면은 하단 NavigationBar 없이 독립된 화면으로 표시
+      GoRoute(
+        path: '/movies/:movieId',
+        builder: (context, state) {
+          final movieId = int.tryParse(state.pathParameters['movieId'] ?? '');
+          return MovieDetailScreen(movieId: movieId ?? -1);
+        },
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -43,15 +51,6 @@ class AppRouter {
           GoRoute(
             path: '/movies',
             builder: (context, state) => const MovieListScreen(),
-            routes: [
-              GoRoute(
-                path: ':movieId',
-                builder: (context, state) {
-                  final movieId = int.tryParse(state.pathParameters['movieId'] ?? '');
-                  return MovieDetailScreen(movieId: movieId ?? -1);
-                },
-              ),
-            ],
           ),
           GoRoute(
             path: '/my',

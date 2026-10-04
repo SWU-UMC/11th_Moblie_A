@@ -10,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
         return Scaffold(
-            appBar: const CommonAppBar(title: '내 프로필'),
+            appBar: const CommonAppBar(title: '내 프로필', centerTitle: false),
             body: SafeArea(
                 child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
