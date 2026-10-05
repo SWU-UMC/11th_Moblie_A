@@ -32,7 +32,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool get _isFormValid {
     final nicknameValid = _nicknameController.text.trim().length >= 2;
-    final emailValid = _isEmailValid(_emailController.text);
+    final emailValid = _isEmailValid(_emailController.text.trim());
     final passwordValid = _passwordController.text.length >= 8;
     return nicknameValid && emailValid && passwordValid && _agreedToTerms;
   }
