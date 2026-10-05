@@ -56,7 +56,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
         if(movie == null) {
             return Scaffold(
-                appBar: CommonAppBar(title: '영화 상세', showBackButton: true),
+                appBar: CommonAppBar(title: '영화 상세', showBackButton: true, fallbackLocation: '/movies'),
                 body: const Center(child: Text('영화를 찾을 수 없습니다')),
             );
         }
@@ -65,6 +65,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             appBar: CommonAppBar(
                 title: 'Cinema Archive',
                 showBackButton: true,
+                fallbackLocation: '/movies',
                 actions: [
                     IconButton(
                         icon: const Icon(Icons.share),
