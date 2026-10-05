@@ -42,7 +42,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         if(result != null && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text('평점 $result점을 넘겼습니다'),
+                    content: Text('평점 $result점을 남겼습니다'),
                     behavior: SnackBarBehavior.floating,
                 ),
             );
