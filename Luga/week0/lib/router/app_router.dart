@@ -7,6 +7,7 @@ import '../screen/movie_list_screen.dart';
 import '../screen/movie_detail_screen.dart';
 import '../screen/profile_screen.dart';
 import '../screen/main_screen.dart';
+import '../service/movie_service.dart';
 
 class AppRouter {
   AppRouter._();
@@ -50,7 +51,9 @@ class AppRouter {
           ),
           GoRoute(
             path: '/movies',
-            builder: (context, state) => const MovieListScreen(),
+            builder: (context, state) => const MovieListScreen(
+              service: FakeMovieService(),
+            ),
           ),
           GoRoute(
             path: '/my',
