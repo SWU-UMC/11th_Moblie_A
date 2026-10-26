@@ -5,7 +5,6 @@ import '../service/movie_service.dart';
 import '../widget/empty_view.dart';
 import '../widget/error_view.dart';
 import '../widget/loading_view.dart';
-import '../widget/movie_card.dart';
 import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
 import '../widget/movie_grid.dart';

@@ -11,7 +11,7 @@ class MovieGrid extends StatelessWidget {
     Widget build(BuildContext context) {
         return GridView.builder(
             padding: const EdgeInsets.all(24),
-            itemCount: movie.length,
+            itemCount: movies.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisSpacing: 20,
