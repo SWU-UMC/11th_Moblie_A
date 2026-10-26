@@ -8,6 +8,7 @@ import '../widget/loading_view.dart';
 import '../widget/movie_card.dart';
 import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
+import '../widget/movie_grid.dart';
 
 class MovieListScreen extends StatefulWidget {
     const MovieListScreen({super.key, required this.service});
@@ -21,6 +22,8 @@ class MovieListScreen extends StatefulWidget {
 class _MovieListScreenState extends State<MovieListScreen> {
     static const _prefKey = 'last_selected_genre';
 
+    final _prefs = SharedPreferencesAsync();
+
     late Future<List<Movie>> _moviesFuture;
     String? _selectedGenre; // null = 전체
 
@@ -32,19 +35,17 @@ class _MovieListScreenState extends State<MovieListScreen> {
     }
 
     Future<void> _restoreGenre() async {
-        final prefs = await SharedPreferences.getInstance();
-        final saved = prefs.getString(_prefKey);
+        final saved = await _prefs.getString(_prefKey);
         if (!mounted || saved == null) return;
         setState(() => _selectedGenre = saved);
     }
 
     Future<void> _selectGenre(String? genre) async {
         setState(() => _selectedGenre = genre);
-        final prefs = await SharedPreferences.getInstance();
         if(genre == null) {
-            await prefs.remove(_prefKey);
+            await _prefs.remove(_prefKey);
         } else {
-            await prefs.setString(_prefKey, genre);
+            await _prefs.setString(_prefKey, genre);
         }
     }
 
@@ -121,17 +122,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                                                         actionLabel: '전체 보기',
                                                         onAction: () => _selectGenre(null),
                                                     )
-                                                    : GridView.builder(
-                                                        padding: const EdgeInsets.all(24),
-                                                        itemCount: filtered.length,
-                                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                                            crossAxisCount: 2,
-                                                            mainAxisSpacing: 20,
-                                                            crossAxisSpacing: 16,
-                                                            childAspectRatio: 0.55,
-                                                        ),
-                                                        itemBuilder: (context, index) => MovieCard(movie: filtered[index]),
-                                                    ),
+                                                    : MovieGrid(movies: filtered),
                                                 ),
                                             ],
                                         );
