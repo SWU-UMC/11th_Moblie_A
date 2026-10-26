@@ -10,9 +10,7 @@ import '../theme/app_colors.dart';
 import '../widget/movie_grid.dart';
 
 class MovieListScreen extends StatefulWidget {
-    const MovieListScreen({super.key, required this.service});
-
-    final MovieService service;
+    const MovieListScreen({super.key});
 
     @override
     State<MovieListScreen> createState() => _MovieListScreenState();
@@ -23,13 +21,11 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     final _prefs = SharedPreferencesAsync();
 
-    late Future<List<Movie>> _moviesFuture;
     String? _selectedGenre; // null = 전체
 
     @override
     void initState() {
         super.initState();
-        _moviesFuture = widget.service.fetchMovies();
         _restoreGenre();
     }
 
@@ -87,45 +83,24 @@ class _MovieListScreenState extends State<MovieListScreen> {
                             ),
 
                             Expanded(
-                                child: FutureBuilder<List<Movie>>(
-                                    future: _moviesFuture,
-                                    builder: (context, snapshot) {
-                                        if (snapshot.connectionState == ConnectionState.waiting) {
-                                            return const LoadingView();
-                                        }
-                                        if (snapshot.hasError) {
-                                            return ErrorView(onRetry: _retry);
-                                        }
-
-                                        final all = snapshot.data ?? [];
-                                        if(all.isEmpty) {
-                                            return EmptyView(
+                                child: Consumer<MovieListViewModel>(
+                                    builder: (context, viewModel, child) {
+                                        return switch (viewModel.status) {
+                                            MovieListLoadStatus.idle ||
+                                            MovieListLoadStatus.loading => const LoadingView(),
+                                            MovieListLoadStatus.error => ErrorView(
+                                                onRetry: () => context.read<MovieListViewModel>().loadInitial(),
+                                            ),
+                                            MovieListLoadStatus.empty => EmptyView(
                                                 message: '아직 등록된 영화가 없어요.',
                                                 actionLabel: '새로고침',
-                                                onAction: _retry,
-                                            );
-                                        }
-
-                                        final genres = _genresOf(all);
-                                        final selected = genres.contains(_selectedGenre) ? _selectedGenre : null;
-                                        final filtered = selected == null ? all : all.where((m) => m.genreTags.contains(selected)).toList();
-
-                                        return Column(
-                                            children: [
-                                                _buildGenreChips(genres, selected),
-                                                const SizedBox(height: 8),
-                                                Expanded(
-                                                    child: filtered.isEmpty
-                                                    ? EmptyView(
-                                                        message: '선택한 장르의 영화가 없어요 .',
-                                                        actionLabel: '전체 보기',
-                                                        onAction: () => _selectGenre(null),
-                                                    )
-                                                    : MovieGrid(movies: filtered),
-                                                ),
-                                            ],
-                                        );
-                                    }
+                                                onAction: () => context.read<MovieListViewModel>().loadInitial(),
+                                            ),
+                                            MovieListLoadStatus.success => MovieGrid(
+                                                movies: viewModel.movies,
+                                            ),
+                                        };
+                                    },
                                 ),
                             ),
                         ],

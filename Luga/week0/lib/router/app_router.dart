@@ -46,14 +46,22 @@ class AppRouter {
             path: '/home',
             builder: (context, state) => PopScope(
               canPop: false,
-              child: const HomeScreen(),
+              child: ChangeNotifierProvider<MovieHomeViewModel>(
+                create: (context) => MovieHomeViewModel(
+                  context.read<TmdbMovieService>(),
+                )..loadPopular(),
+                child: const HomeScreen(),
+              ),
             ),
           ),
           GoRoute(
             path: '/movies',
-            builder: (context, state) => const MovieListScreen(
-              // TODO(5주차 유저별 평점 조회 API) : FakeMovieService -> 실제 API Service로 교체
-              service: FakeMovieService(),
+            builder: (context, state) =>
+                ChangeNotifierProvider<MovieListViewModel>(
+              create: (context) => MovieListViewModel(
+                context.read<TmdbMovieService>(),
+              )..loadInitial(),
+              child: const MovieListScreen(),
             ),
           ),
           GoRoute(
