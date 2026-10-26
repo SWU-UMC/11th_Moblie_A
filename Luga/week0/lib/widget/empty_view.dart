@@ -20,7 +20,7 @@ class EmptyView extends StatelessWidget {
             child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
-                    mainAxisSize: MainAxisSixe.min,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                         const Icon(Icons.movie_outlined, size: 48, color: AppColors.primary),
                         const SizedBox(height: 12),

@@ -11,7 +11,7 @@ class MovieLoadException implements Exception {
 }
 
 class FakeMovieService implements MovieService {
-    const FakeMoiveService({this.mode = FakeMode.success});
+    const FakeMovieService({this.mode = FakeMode.success});
 
     final FakeMode mode;
 

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../model/movie.dart';
+import '../service/movie_service.dart';
+import '../widget/empty_view.dart';
+import '../widget/error_view.dart';
+import '../widget/loading_view.dart';
 import '../widget/movie_card.dart';
 import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
@@ -33,7 +38,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
         setState(() => _selectedGenre = saved);
     }
 
-    Future<void> _selectedGenre(String? genre) async {
+    Future<void> _selectGenre(String? genre) async {
         setState(() => _selectedGenre = genre);
         final prefs = await SharedPreferences.getInstance();
         if(genre == null) {
