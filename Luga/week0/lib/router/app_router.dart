@@ -52,6 +52,7 @@ class AppRouter {
           GoRoute(
             path: '/movies',
             builder: (context, state) => const MovieListScreen(
+              // TODO(5주차 유저별 평점 조회 API) : FakeMovieService -> 실제 API Service로 교체
               service: FakeMovieService(),
             ),
           ),
