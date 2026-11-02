@@ -11,8 +11,6 @@ class HomeScreen extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
         final textTheme = Theme.of(context).textTheme;
-        final featured = movies.first; // 별빛 아래 우리
-        final others = movies.skip(1).toList(); // 나머지 영화 카드
 
         const posterHeight = 600.0; // 포스터 자체 고정 높이
 

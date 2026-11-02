@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../model/movie.dart';
+import '../model/tmdb_movie_dto.dart';
 import '../theme/app_colors.dart';
 
 class MovieCard extends StatelessWidget {
-  const MovieCard({super.key, required this.movie});
+  const MovieCard({
+    super.key,
+    required this.movie,
+    this.genreNames = const {},
+    });
 
-  final Movie movie;
+  final TmdbMovieDto movie;
+  final Map<int, String> genreNames;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final posterUrl = movie.posterUrl;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -27,14 +33,13 @@ class MovieCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       color: AppColors.primaryLight,
-                      child: Image.asset(
-                        movie.posterAsset,
+                      child: posterUrl == null
+                      ? const _PosterPlaceholderOP
+                      : image.network(
+                        posterUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.movie_outlined, size: 40, color: AppColors.primary),
-                          );
-                        },
+                        loadingBuilder: (context, child, progress) => progress == null ? child : const _PosterPlaceholder(),
+                        errorBuilder: (context, error, stackTrace) => const _PosterPlaceholder(),
                       ),
                     ),
                   ),
@@ -66,18 +71,41 @@ class MovieCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            movie.title,
+            movie.title.isEmpty ? '제목 없음' : movie.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.titleMedium,
           ),
           const SizedBox(height: 2),
           Text(
-            '${movie.year} · ${movie.genre}',
+            _subtitle(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: textTheme.bodyMedium,
           ),
         ],
       ),
+    );
+  }
+
+  String _subtitle() {
+    final date = movie.releaseDate;
+    final year = (date == null || date.length < 4) ? '' : date.substring(0, 4);
+    final genre = movie.genreIds
+        .map((id) => genreNames[id])
+        .whereType<String>()
+        .firstOrNull;
+    return [year, genre].where((s) => s != null && s.isNotEmpty).join(' · ');
+  }
+}
+
+class _PosterPlaceholder extends StatelessWidget {
+  const _PosterPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Icon(Icons.movie, size: 40, color: AppColors.primary),
     );
   }
 }

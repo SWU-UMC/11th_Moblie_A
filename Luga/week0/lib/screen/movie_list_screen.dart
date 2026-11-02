@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../model/movie.dart';
-import '../service/movie_service.dart';
+import 'package:provider/provider.dart';
+import '../model/tmdb_genre_dto.dart';
+import '../view_model/movie_list_view_model.dart';
 import '../widget/empty_view.dart';
 import '../widget/error_view.dart';
 import '../widget/loading_view.dart';
@@ -13,52 +13,6 @@ class MovieListScreen extends StatefulWidget {
     const MovieListScreen({super.key});
 
     @override
-    State<MovieListScreen> createState() => _MovieListScreenState();
-}
-
-class _MovieListScreenState extends State<MovieListScreen> {
-    static const _prefKey = 'last_selected_genre';
-
-    final _prefs = SharedPreferencesAsync();
-
-    String? _selectedGenre; // null = 전체
-
-    @override
-    void initState() {
-        super.initState();
-        _restoreGenre();
-    }
-
-    Future<void> _restoreGenre() async {
-        final saved = await _prefs.getString(_prefKey);
-        if (!mounted || saved == null) return;
-        setState(() => _selectedGenre = saved);
-    }
-
-    Future<void> _selectGenre(String? genre) async {
-        setState(() => _selectedGenre = genre);
-        if(genre == null) {
-            await _prefs.remove(_prefKey);
-        } else {
-            await _prefs.setString(_prefKey, genre);
-        }
-    }
-
-    void _retry() {
-        setState(() {
-            _moviesFuture = widget.service.fetchMovies();
-        });
-    }
-
-    List<String> _genresOf(List<Movie> all) {
-        final set = <String>{};
-        for (final movie in all) {
-            set.addAll(movie.genreTags);
-        }
-        return set.toList();
-    }
-
-    @override
     Widget build(BuildContext context) {
         final textTheme = Theme.of(context).textTheme;
 
@@ -67,13 +21,16 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 child: ResponsiveContainer(
                     child: Column(
                         children: [
-                            // 홈 화면과 동일한 스타일의 커스텀 헤더
                             Padding(
                                 padding: const EdgeInsets.all(24),
                                 child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                        Text('영화', style: textTheme.titleLarge?.copyWith(color: AppColors.primary)),
+                                        Text(
+                                            '영화',
+                                            style: textTheme.titleLarge
+                                            ?.copyWith(color: AppColors.primary),
+                                        ),
                                         GestureDetector(
                                             onTap: () {},
                                             child: const Icon(Icons.search),
@@ -82,22 +39,27 @@ class _MovieListScreenState extends State<MovieListScreen> {
                                 ),
                             ),
 
+                            const _GenreChips(),
+                            const SizedBox(height: 16),
+
                             Expanded(
                                 child: Consumer<MovieListViewModel>(
                                     builder: (context, viewModel, child) {
                                         return switch (viewModel.status) {
                                             MovieListLoadStatus.idle ||
-                                            MovieListLoadStatus.loading => const LoadingView(),
+                                            MovieListLoadStatus.loading => 
+                                            const LoadingView(),
                                             MovieListLoadStatus.error => ErrorView(
-                                                onRetry: () => context.read<MovieListViewModel>().loadInitial(),
+                                                onRetry: () => context.read<MovieListViewModel>().retry(),
                                             ),
                                             MovieListLoadStatus.empty => EmptyView(
                                                 message: '아직 등록된 영화가 없어요.',
                                                 actionLabel: '새로고침',
-                                                onAction: () => context.read<MovieListViewModel>().loadInitial(),
+                                                onAction: () => context.read<MovieListViewModel>().retry(),
                                             ),
                                             MovieListLoadStatus.success => MovieGrid(
                                                 movies: viewModel.movies,
+                                                genreNames: {for (final g in viewModel.genres) g.id: g.name},
                                             ),
                                         };
                                     },
@@ -109,33 +71,51 @@ class _MovieListScreenState extends State<MovieListScreen> {
             ),
         );
     }
+}
 
-    Widget _buildGenreChips(List<String> genres, String? selected) {
+class _GenreChips extends StatelessWidget {
+    const _GenreChips();
+
+    @override
+    Widget build(BuildContext context) {
+        // 장르 목록과 선택 값이 바뀔 때만 다시 그리도록 select 사용
+        final genres = context
+            .select<MovieListViewModel, List<TmdbGenreDto>>((vm) => vm.genres);
+        final selectedId =
+            context.select<MovieListViewModel, int?>((vm) => vm.selectedGenreId);
+
+        // 장르를 아직 못 받았으면(로딩 중/초기 에러) Chip 영역을 숨김
+        if (genres.isEmpty) return const SizedBox(height: 40);
+
         return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SizedBox(
                 height: 40,
                 child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: genres.length + 1,
-                    separatorBuilder: (context, index) => const SizedBox(width: 8),
+                    itemCount: genres.length + 1, // 0번 = 전체
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
-                        final isAll = index == 0;
-                        final genre = isAll ? null : genres[index - 1];
-                        final isSelected = selected == genre;
+                        final genre = index == 0 ? null : genres[index - 1];
+                        final isSelected = selectedId == genre?.id;
 
                         return ChoiceChip(
-                            label: Text(isAll ? '전체' : genre!, overflow: TextOverflow.visible, softWrap: false),
+                            label: Text(
+                                genre?.name ?? '전체',
+                                overflow: TextOverflow.visible,
+                                softWrap: false,
+                            ),
                             selected: isSelected,
                             showCheckmark: false,
-                            onSelected: (_) => _selectGenre(genre),
+                            onSelected: (_) =>
+                                context.read<MovieListViewModel>().selectGenre(genre?.id),
                             selectedColor: AppColors.primary,
+                            backgroundColor: AppColors.primaryLight,
                             labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
+                                color: isSelected ? Colors.white : AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
                             ),
                             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                            backgroundColor: AppColors.primaryLight,
                             shape: const StadiumBorder(),
                             side: BorderSide.none,
                         );
