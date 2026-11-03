@@ -20,7 +20,7 @@ class AppTheme {
       backgroundColor: AppColors.surface,
       foregroundColor: Colors.black,
       elevation: 0,
-      centerTitle: false,
+      centerTitle: true,
       titleTextStyle: TextStyle(
         fontFamily: 'Manrope',
         fontSize: 18,
@@ -75,6 +75,25 @@ class AppTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
         ),
+    ),
+
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.surfaceLowest,
+      indicatorColor: AppColors.primaryLight,
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return TextStyle(
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          color: selected ? AppColors.primary : AppColors.textSecondary,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(
+          color: selected ? AppColors.primary : AppColors.textSecondary,
+        );
+      }),
     ),
   );
 }
