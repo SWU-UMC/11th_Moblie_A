@@ -1,4 +1,9 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:movielog/data/models/tmdb_genre_dto.dart';
+import 'package:movielog/data/models/tmdb_movie_dto.dart';
+import 'package:movielog/data/services/tmdb_movie_service.dart';
 
 enum MovieListLoadStatus { idle, loading, success, empty, error }
 
@@ -20,13 +25,15 @@ class MovieListViewModel extends ChangeNotifier {
 
   bool _isStale(int version) => _disposed || version != _requestVersion;
 
+  bool get isLoading => status == MovieListLoadStatus.loading;
+
   Future<void> loadInitial() async {
     final version = ++_requestVersion;
     status = MovieListLoadStatus.loading;
     notifyListeners();
 
     try {
-      final fetched = await _servie.fetchGenres();
+      final fetched = await _service.fetchGenres();
       final saved = await _prefs.getInt(_prefKey);
       if(_isStale(version)) return;
       genres = fetched;
@@ -39,18 +46,22 @@ class MovieListViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    await _loadMovies(version);
+    await _loadMovies();
   }
 
   Future<void> selectGenre(int? genreId) async {
+    if (isLoading || genreId == selectedGenreId) return;
+
     selectedGenreId = genreId;
     unawaited(_saveGenre(genreId)); // 저장을 기다리느라 로딩 표시가 늦어지지 않게
     await _loadMovies();
   }
 
   /// ErrorView / EmptyView 재시도용: 현재 선택된 장르를 유지
-  Future<void> retry() =>
-      genres.isEmpty ? loadInitial() : _loadMovies();
+  Future<void> retry() {
+    if (isLoading) return Future.value();
+    return genres.isEmpty ? loadInitial() : _loadMovies();
+}
 
   Future<void> _saveGenre(int? id) async {
     try {

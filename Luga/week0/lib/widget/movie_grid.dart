@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../model/tmdb_movie_dto.dart';
+import '../data/models/tmdb_movie_dto.dart';
 import 'movie_card.dart';
 
 class MovieGrid extends StatelessWidget {
@@ -9,7 +9,7 @@ class MovieGrid extends StatelessWidget {
         this.genreNames = const {},
     });
 
-    final List<Movie> movies;
+    final List<TmdbMovieDto> movies;
     final Map<int, String> genreNames;
 
     @override

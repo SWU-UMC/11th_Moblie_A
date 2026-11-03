@@ -1,51 +1,54 @@
-// lib/widgets/tmdb_poster_image.dart
-
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class TmdbPosterImage extends StatelessWidget {
-  const TmdbPosterImage({
-    super.key,
-    required this.posterPath,
-    required this.width,
-    required this.height,
-    this.fit = BoxFit.cover,
-  });
+    const TmdbPosterImage({
+        super.key,
+        required this.posterPath,
+        this.size = 'w500',
+        this.fit = BoxFit.cover,
+        this.iconSize = 40,
+    });
 
-  final String? posterPath;
-  final double width;
-  final double height;
-  final BoxFit fit;
+    final String? posterPath;
+    final String size; // w342, w500, w780 등
+    final BoxFit fit;
+    final double iconSize;
 
-  static const _baseUrl = 'https://image.tmdb.org/t/p';
-  static const _size = 'w500';
+    static const _baseUrl = 'https://image.tmdb.org/t/p';
 
-  String? get _imageUrl {
-    if (posterPath == null || posterPath!.isEmpty) return null;
-    return '$_baseUrl/$_size$posterPath';
-  }
+    String? get _imageUrl {
+        final path = posterPath;
+        if (path == null || path.isEmpty) return null;
+        return '$_baseUrl/$size$path';
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = _imageUrl;
+    @override
+    Widget build(BuildContext context) {
+        final url = _imageUrl;
+        if (url == null) return _placeholder();
 
-    if (imageUrl == null) return _placeholder();
+        return Image.network(
+            url,
+            width: double.infinity,
+            height: double.infinity,
+            fit: fit,
+            loadingBuilder: (context, child, progress) =>
+                progress == null ? child : _placeholder(),
+            errorBuilder: (context, error, stackTrace) => _placeholder(),
+        );
+    }
 
-    return Image.network(
-      imageUrl,
-      width: width,
-      height: height,
-      fit: fit,
-      errorBuilder: (_, __, ___) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      width: width,
-      height: height,
-      color: Colors.grey.shade200,
-      alignment: Alignment.center,
-      child: const Icon(Icons.image_not_supported_outlined),
-    );
-  }
+    Widget _placeholder() {
+        return ColoredBox(
+            color: AppColors.primaryLight,
+            child: Center(
+                child: Icon(
+                    Icons.movie_outlined,
+                    size: iconSize,
+                    color: AppColors.primary,
+                ),
+            ),
+        );
+    }
 }

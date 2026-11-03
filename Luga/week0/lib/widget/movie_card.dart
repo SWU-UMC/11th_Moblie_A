@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../model/tmdb_movie_dto.dart';
+import '../data/models/tmdb_movie_dto.dart';
 import '../theme/app_colors.dart';
 
 class MovieCard extends StatelessWidget {
@@ -34,8 +34,8 @@ class MovieCard extends StatelessWidget {
                     child: Container(
                       color: AppColors.primaryLight,
                       child: posterUrl == null
-                      ? const _PosterPlaceholderOP
-                      : image.network(
+                      ? const _PosterPlaceholder()
+                      : Image.network(
                         posterUrl,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, progress) => progress == null ? child : const _PosterPlaceholder(),
@@ -59,7 +59,7 @@ class MovieCard extends StatelessWidget {
                         const Icon(Icons.star, size: 12, color: Colors.white),
                         const SizedBox(width: 2),
                         Text(
-                          movie.rating.toStringAsFixed(1),
+                          movie.voteAverage.toStringAsFixed(1),
                           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ],

@@ -1,3 +1,5 @@
+import 'tmdb_movie_dto.dart';
+
 class TmdbMoviePageDto {
   const TmdbMoviePageDto({
     required this.page,

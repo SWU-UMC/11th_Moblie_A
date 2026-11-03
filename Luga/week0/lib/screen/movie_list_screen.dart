@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../model/tmdb_genre_dto.dart';
-import '../view_model/movie_list_view_model.dart';
+import '../data/models/tmdb_genre_dto.dart';
+import '../view_model/movie_list_model.dart';
 import '../widget/empty_view.dart';
 import '../widget/error_view.dart';
 import '../widget/loading_view.dart';
@@ -9,7 +9,7 @@ import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
 import '../widget/movie_grid.dart';
 
-class MovieListScreen extends StatefulWidget {
+class MovieListScreen extends StatelessWidget {
     const MovieListScreen({super.key});
 
     @override
@@ -78,48 +78,56 @@ class _GenreChips extends StatelessWidget {
 
     @override
     Widget build(BuildContext context) {
-        // 장르 목록과 선택 값이 바뀔 때만 다시 그리도록 select 사용
         final genres = context
             .select<MovieListViewModel, List<TmdbGenreDto>>((vm) => vm.genres);
         final selectedId =
             context.select<MovieListViewModel, int?>((vm) => vm.selectedGenreId);
+        final isLoading =
+            context.select<MovieListViewModel, bool>((vm) => vm.isLoading);
 
-        // 장르를 아직 못 받았으면(로딩 중/초기 에러) Chip 영역을 숨김
         if (genres.isEmpty) return const SizedBox(height: 40);
 
-        return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: SizedBox(
-                height: 40,
-                child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: genres.length + 1, // 0번 = 전체
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                        final genre = index == 0 ? null : genres[index - 1];
-                        final isSelected = selectedId == genre?.id;
+        return IgnorePointer(
+            ignoring: isLoading, // 요청 중에는 탭 자체를 막음
+            child: AnimatedOpacity(
+                opacity: isLoading ? 0.5 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: SizedBox(
+                        height: 40,
+                        child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: genres.length + 1, // 0번 = 전체
+                            separatorBuilder: (_, _) => const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                                final genre = index == 0 ? null : genres[index - 1];
+                                final isSelected = selectedId == genre?.id;
 
-                        return ChoiceChip(
-                            label: Text(
-                                genre?.name ?? '전체',
-                                overflow: TextOverflow.visible,
-                                softWrap: false,
-                            ),
-                            selected: isSelected,
-                            showCheckmark: false,
-                            onSelected: (_) =>
-                                context.read<MovieListViewModel>().selectGenre(genre?.id),
-                            selectedColor: AppColors.primary,
-                            backgroundColor: AppColors.primaryLight,
-                            labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                            ),
-                            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                            shape: const StadiumBorder(),
-                            side: BorderSide.none,
-                        );
-                    },
+                                return ChoiceChip(
+                                    label: Text(
+                                        genre?.name ?? '전체',
+                                        overflow: TextOverflow.visible,
+                                        softWrap: false,
+                                    ),
+                                    selected: isSelected,
+                                    showCheckmark: false,
+                                    onSelected: (_) => context
+                                        .read<MovieListViewModel>()
+                                        .selectGenre(genre?.id),
+                                    selectedColor: AppColors.primary,
+                                    backgroundColor: AppColors.primaryLight,
+                                    labelStyle: TextStyle(
+                                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                    ),
+                                    labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                                    shape: const StadiumBorder(),
+                                    side: BorderSide.none,
+                                );
+                            },
+                        ),
+                    ),
                 ),
             ),
         );
