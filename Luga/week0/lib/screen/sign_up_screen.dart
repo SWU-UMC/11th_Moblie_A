@@ -30,6 +30,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
+  final _duplicatedNicknames = <String>{};
+  final _duplicatedEmails = <String>{};
+
   bool _agreedToTerms = false;
 
   CheckStatus _nicknameStatus = CheckStatus.idle;
@@ -74,8 +77,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final available = await _isNicknameAvailable(nickname);
       // 확인 중 입력이 바뀌었거나 화면이 닫혔으면 결과 무시
       if (!mounted || nickname != _nicknameController.text.trim()) return;
-      setState(() => _nicknameStatus =
-          available ? CheckStatus.available : CheckStatus.duplicated);
+      setState(() {
+        if(available) {
+          _nicknameStatus = CheckStatus.available;
+        } else {
+          _duplicatedNicknames.add(nickname);
+          _nicknameStatus = CheckStatus.duplicated;
+        }
+      });
+    } on DioException {
+      if(!mounted || nickname != _nicknameController.text.trim()) return;
+      setState(() => _nicknameStatus = CheckStatus.error);
     } catch (_) {
       if (!mounted || nickname != _nicknameController.text.trim()) return;
       setState(() => _nicknameStatus = CheckStatus.error);
@@ -88,8 +100,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     try {
       final available = await _isEmailAvailable(email);
       if (!mounted || email != _emailController.text.trim()) return;
-      setState(() =>
-          _emailStatus = available ? CheckStatus.available : CheckStatus.duplicated);
+      setState(() {
+        if(available) {
+          _emailStatus = CheckStatus.available;
+        } else {
+          _duplicatedEmails.add(email);
+          _emailStatus = CheckStatus.duplicated;
+        }
+      });
+    } on DioException {
+      if(!mounted || email != _emailController.text.trim()) return;
+      setState(() => _emailStatus = CheckStatus.error);
     } catch (_) {
       if (!mounted || email != _emailController.text.trim()) return;
       setState(() => _emailStatus = CheckStatus.error);
@@ -192,8 +213,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   isLoading: _nicknameStatus == CheckStatus.checking,
                                   onPressed: _isNicknameFormatValid ? _checkNickname : null,
                                 ),
-                                onChanged: (_) => setState(() {
-                                  _nicknameStatus = CheckStatus.idle; // 입력이 바뀌면 재확인 필요
+                                onChanged: (value) => setState(() {
+                                  _nicknameStatus = _duplicatedNicknames.contains(value.trim())
+                                      ? CheckStatus.duplicated
+                                      : CheckStatus.idle;
                                 }),
                               ),
                               const SizedBox(height: 20),
@@ -224,8 +247,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   isLoading: _emailStatus == CheckStatus.checking,
                                   onPressed: _isEmailFormatValid ? _checkEmail : null,
                                 ),
-                                onChanged: (_) => setState(() {
-                                  _emailStatus = CheckStatus.idle;
+                                onChanged: (value) => setState(() {
+                                  _emailStatus = _duplicatedEmails.contains(value.trim())
+                                      ? CheckStatus.duplicated
+                                      : CheckStatus.idle;
                                 }),
                               ),
                               const SizedBox(height: 20),
