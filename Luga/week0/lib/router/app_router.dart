@@ -13,6 +13,8 @@ import '../screen/movie_detail_screen.dart';
 import '../screen/profile_screen.dart';
 import '../screen/main_screen.dart';
 import '../screen/my_ratings_screen.dart';
+import '../data/services/rating_api_service.dart';
+import '../view_model/my_ratings_view_model.dart';
 
 class AppRouter {
   AppRouter._();
@@ -78,7 +80,14 @@ class AppRouter {
           ),
           GoRoute(
             path: '/my/ratings',
-            builder: (context, state) => const MyRatingsScreen(),
+            builder: (context, state) => ChangeNotifierProvider<MyRatingsViewModel>(
+              create: (context) => MyRatingsViewModel(
+                context.read<RatingApiService>(),
+                context.read<TmdbMovieService>(),
+                1,
+              )..load(),
+              child: const MyRatingsScreen(),
+            ),
           ),
           GoRoute(
             path: '/my',

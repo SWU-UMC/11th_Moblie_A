@@ -59,10 +59,6 @@ class _RatingList extends StatelessWidget {
         return ListView(
             padding: const EdgeInsets.all(24),
             children: [
-                Text(
-                    '학습용 샘플 회원 (memberId ${viewModel.memberId})의 평점입니다.)',
-                    style: textTheme.bodyMedium,
-                ),
                 if (notice != null) ...[
                     const SizedBox(height: 8),
                     Text(notice,
@@ -135,9 +131,10 @@ class _RatingTile extends StatelessWidget {
                                 const SizedBox(height: 6),
                                 Row(
                                     children: [
-                                        const Icon(Icons.star, size: 18, color: AppColors.primary),
-                                        const SizedBox(width: 4),
-                                        Text('${rating.score}점', style: textTheme.titleMedium),
+                                        Text(
+                                            '별점 ${rating.score} / 5',
+                                            style: textTheme.bodyMedium?.copyWith(color: AppColors.primary),
+                                        ),
                                     ],
                                 ),
                                 if(comment != null && comment.isNotEmpty) ...[
