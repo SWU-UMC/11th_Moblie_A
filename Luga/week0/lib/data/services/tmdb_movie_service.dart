@@ -29,7 +29,7 @@ class TmdbMovieService {
         'sort_by': 'popularity.desc',
         'include_adult': false,
         'include_video': false,
-        if (genreId != null) 'with_genres': genreId,
+        'with_genres': ?genreId,
       },
     );
     return TmdbMoviePageDto.fromJson(
@@ -55,5 +55,16 @@ class TmdbMovieService {
         queryParameters: {'language': 'ko-KR'},
     );
     return TmdbMovieDto.fromJson(response.data as Map<String, dynamic>);
-}
+  }
+  /// 404만 null로 바꾸고, 다른 네트워크 오류는 그대로 던집니다.
+  Future<TmdbMovieDto?> findMovieById(int id) async {
+    try {
+      return await fetchMovieDetail(id);
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    }
+  }
 }

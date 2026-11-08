@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widget/labeled_text_field.dart';
+import '../widget/movie_log_button.dart';
 import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
 import '../widget/common_app_bar.dart';
 import '../theme/app_colors.dart';
+
+enum CheckStatus { idle, checking, available, duplicated, error }
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,27 +17,32 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  // Step 1: Form 유효성 검사를 위한 global key 생성
   final _formKey = GlobalKey<FormState>();
 
-  // Step 2: 닉네임 controller & 이메일 controller & 비밀번호 controller 생성
   final _nicknameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // focus node
   final _nicknameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
-  // 약관 동의
   bool _agreedToTerms = false;
 
+  CheckStatus _nicknameStatus = CheckStatus.idle;
+  CheckStatus _emailStatus = CheckStatus.idle;
+
+  bool get _isNicknameFormatValid => _nicknameController.text.trim().length >= 2;
+  bool get _isEmailFormatValid => _isEmailValid(_emailController.text.trim());
+
   bool get _isFormValid {
-    final nicknameValid = _nicknameController.text.trim().length >= 2;
-    final emailValid = _isEmailValid(_emailController.text.trim());
     final passwordValid = _passwordController.text.length >= 8;
-    return nicknameValid && emailValid && passwordValid && _agreedToTerms;
+    return _isNicknameFormatValid &&
+        _isEmailFormatValid &&
+        passwordValid &&
+        _nicknameStatus == CheckStatus.available &&
+        _emailStatus == CheckStatus.available &&
+        _agreedToTerms;
   }
 
   bool _isEmailValid(String email) {
@@ -42,12 +50,64 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return emailRegex.hasMatch(email);
   }
 
-  void _handleSubmit() {
-  final isValid = _formKey.currentState!.validate();
-  if (isValid && _agreedToTerms) {
-    context.pushReplacement('/home');
+  // TODO(5주차 중복 확인 API): v5 명세의 닉네임/이메일 중복 확인 API로 교체
+  Future<bool> _isNicknameAvailable(String nickname) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return true;
   }
-}
+
+  Future<bool> _isEmailAvailable(String email) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return true;
+  }
+
+  Future<void> _checkNickname() async {
+    final nickname = _nicknameController.text.trim();
+    setState(() => _nicknameStatus = CheckStatus.checking);
+    try {
+      final available = await _isNicknameAvailable(nickname);
+      // 확인 중 입력이 바뀌었거나 화면이 닫혔으면 결과 무시
+      if (!mounted || nickname != _nicknameController.text.trim()) return;
+      setState(() => _nicknameStatus =
+          available ? CheckStatus.available : CheckStatus.duplicated);
+    } catch (_) {
+      if (!mounted || nickname != _nicknameController.text.trim()) return;
+      setState(() => _nicknameStatus = CheckStatus.error);
+    }
+  }
+
+  Future<void> _checkEmail() async {
+    final email = _emailController.text.trim();
+    setState(() => _emailStatus = CheckStatus.checking);
+    try {
+      final available = await _isEmailAvailable(email);
+      if (!mounted || email != _emailController.text.trim()) return;
+      setState(() =>
+          _emailStatus = available ? CheckStatus.available : CheckStatus.duplicated);
+    } catch (_) {
+      if (!mounted || email != _emailController.text.trim()) return;
+      setState(() => _emailStatus = CheckStatus.error);
+    }
+  }
+
+  // 상태별 안내 문구/색상
+  (String?, Color?) _message(CheckStatus status, String target) {
+    return switch (status) {
+      CheckStatus.idle => (null, null),
+      CheckStatus.checking => ('$target 사용 가능 여부를 확인 중입니다.', const Color(0xFF1565C0)),
+      CheckStatus.available => ('사용 가능한 $target입니다.', const Color(0xFF2E7D32)),
+      CheckStatus.duplicated => ('이미 사용 중인 $target입니다.', AppColors.error),
+      CheckStatus.error => ('확인하지 못했어요. 다시 시도해 주세요.', AppColors.error),
+    };
+  }
+
+  void _handleSubmit() {
+    final isValid = _formKey.currentState!.validate();
+    if (isValid && _isFormValid) {
+      // 실제 가입 요청은 이번 주차 범위가 아니므로 홈으로만 이동
+      context.pushReplacement('/home');
+    }
+  }
 
   @override
   void dispose() {
@@ -63,6 +123,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final (nicknameMsg, nicknameColor) = _message(_nicknameStatus, '닉네임');
+    final (emailMsg, emailColor) = _message(_emailStatus, '이메일');
 
     return Scaffold(
       appBar: const CommonAppBar(title: '회원가입', showBackButton: true),
@@ -79,7 +141,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 스크롤되는 입력 영역
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -94,7 +155,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                               const SizedBox(height: 32),
 
-                              // 닉네임 입력 필드
+                              // 닉네임 + 중복 확인
                               LabeledTextField(
                                 controller: _nicknameController,
                                 focusNode: _nicknameFocusNode,
@@ -110,11 +171,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   }
                                   return null;
                                 },
-                                onChanged: (_) => setState(() {}),
+                                showValidIcon: _nicknameStatus == CheckStatus.available,
+                                helperText: nicknameMsg,
+                                helperColor: nicknameColor,
+                                trailing: MovieLogButton(
+                                  label: '중복 확인',
+                                  isLoading: _nicknameStatus == CheckStatus.checking,
+                                  onPressed: _isNicknameFormatValid ? _checkNickname : null,
+                                ),
+                                onChanged: (_) => setState(() {
+                                  _nicknameStatus = CheckStatus.idle; // 입력이 바뀌면 재확인 필요
+                                }),
                               ),
                               const SizedBox(height: 20),
 
-                              // 이메일 입력 필드
+                              // 이메일 + 중복 확인
                               LabeledTextField(
                                 controller: _emailController,
                                 focusNode: _emailFocusNode,
@@ -131,11 +202,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   }
                                   return null;
                                 },
-                                onChanged: (_) => setState(() {}),
+                                showValidIcon: _emailStatus == CheckStatus.available,
+                                helperText: emailMsg,
+                                helperColor: emailColor,
+                                trailing: MovieLogButton(
+                                  label: '중복 확인',
+                                  isLoading: _emailStatus == CheckStatus.checking,
+                                  onPressed: _isEmailFormatValid ? _checkEmail : null,
+                                ),
+                                onChanged: (_) => setState(() {
+                                  _emailStatus = CheckStatus.idle;
+                                }),
                               ),
                               const SizedBox(height: 20),
 
-                              // 비밀번호 입력 필드
+                              // 비밀번호
                               LabeledTextField(
                                 controller: _passwordController,
                                 focusNode: _passwordFocusNode,
@@ -152,6 +233,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   }
                                   return null;
                                 },
+                                showValidIcon: false,
                                 onChanged: (_) => setState(() {}),
                               ),
                               const SizedBox(height: 16),
@@ -160,7 +242,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
 
-                      // 하단 고정 영역 (스크롤 밖)
+                      // 하단 고정 영역
                       Padding(
                         padding: EdgeInsets.only(
                           left: 24,
@@ -174,20 +256,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             TermsCheckbox(
                               value: _agreedToTerms,
                               onChanged: (value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
+                                setState(() => _agreedToTerms = value ?? false);
                               },
                             ),
                             const SizedBox(height: 24),
-
-                            SubmitButton(
-                              enabled: _isFormValid,
-                              onPressed: _handleSubmit,
+                            SizedBox(
+                              width: double.infinity,
+                              child: SubmitButton(
+                                enabled: _isFormValid,
+                                onPressed: _handleSubmit,
+                              ),
                             ),
                             const SizedBox(height: 24),
-
-                            // 하단 로그인 링크
                             RichText(
                               textAlign: TextAlign.center,
                               text: TextSpan(
@@ -200,7 +280,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
-                                    // 1주차에는 화면 전환을 구현하지 않습니다.
                                   ),
                                 ],
                               ),

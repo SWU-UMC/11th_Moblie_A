@@ -12,6 +12,7 @@ import '../screen/movie_list_screen.dart';
 import '../screen/movie_detail_screen.dart';
 import '../screen/profile_screen.dart';
 import '../screen/main_screen.dart';
+import '../screen/my_ratings_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -74,6 +75,10 @@ class AppRouter {
               )..loadInitial(),
               child: const MovieListScreen(),
             ),
+          ),
+          GoRoute(
+            path: '/my/ratings',
+            builder: (context, state) => const MyRatingsScreen(),
           ),
           GoRoute(
             path: '/my',

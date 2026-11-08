@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widget/profile_header.dart';
 import '../widget/genre_section.dart';
 import '../widget/stat_row.dart';
@@ -18,14 +19,20 @@ class ProfileScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(24),
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: const [
-                                ProfileHeader(),
-                                SizedBox(height: 32),
-                                StatRow(),
-                                SizedBox(height: 32),
-                                Align(
+                            children: [
+                                const ProfileHeader(),
+                                const SizedBox(height: 32),
+                                const StatRow(),
+                                const SizedBox(height: 32),
+                                const Align(
                                     alignment: Alignment.centerLeft,
                                     child: GenreSection(),
+                                    ),
+                                const SizedBox(height: 32),
+                                ListTile(
+                                    title: const Text('내가 등록한 평점'),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    onTap: () => context.push('/my/ratings'),
                                 ),
                             ],
                         ),

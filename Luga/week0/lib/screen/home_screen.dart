@@ -250,7 +250,7 @@ class _FeaturedCard extends StatelessWidget {
         final date = movie.releaseDate;
         final year = (date == null || date.length < 4) ? null : date.substring(0, 4);
         return [
-            if (year != null) year,
+            ?year,
             '★ ${movie.voteAverage.toStringAsFixed(1)}',
         ].join(' · ');
     }
