@@ -6,6 +6,9 @@ import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
 import '../widget/common_app_bar.dart';
 import '../theme/app_colors.dart';
+import 'package:dio/dio.dart';
+import 'package:provider/provider.dart';
+import '../data/services/member_check_service.dart';
 
 enum CheckStatus { idle, checking, available, duplicated, error }
 
@@ -50,15 +53,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return emailRegex.hasMatch(email);
   }
 
-  // TODO(5주차 중복 확인 API): v5 명세의 닉네임/이메일 중복 확인 API로 교체
-  Future<bool> _isNicknameAvailable(String nickname) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+  Future<bool> _isNicknameAvailable(String nickname) {
+    return context.read<MemberCheckService>().checkNickname(nickname);
   }
 
-  Future<bool> _isEmailAvailable(String email) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+  Future<bool> _isEmailAvailable(String email) {
+    return context.read<MemberCheckService>().checkEmail(email);
   }
 
   Future<void> _checkNickname() async {
