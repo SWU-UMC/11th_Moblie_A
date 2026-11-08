@@ -18,6 +18,7 @@ class LabeledTextField extends StatelessWidget {
     this.helperText,
     this.helperColor,
     this.showValidIcon,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -34,6 +35,7 @@ class LabeledTextField extends StatelessWidget {
   final String? helperText;
   final Color? helperColor;
   final bool? showValidIcon;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,9 @@ class LabeledTextField extends StatelessWidget {
       validator: validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       builder: (field) {
-        final hasError = field.hasError;
+        final externalError = errorText;
+        final hasError = field.hasError || externalError != null;
+        final displayError = field.errorText ?? externalError;
         final isFilled = controller.text.isNotEmpty;
         final isValid = showValidIcon ?? (isFilled && !hasError);
 
@@ -120,7 +124,7 @@ class LabeledTextField extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6, left: 4),
                 child: Text(
-                  field.errorText ?? '',
+                  displayError ?? '',
                   style: textTheme.bodyMedium
                       ?.copyWith(color: AppColors.error, fontSize: 12),
                 ),

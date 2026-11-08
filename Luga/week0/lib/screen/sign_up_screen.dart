@@ -126,6 +126,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final (nicknameMsg, nicknameColor) = _message(_nicknameStatus, '닉네임');
     final (emailMsg, emailColor) = _message(_emailStatus, '이메일');
 
+    bool isError(CheckStatus s) =>
+      s == CheckStatus.duplicated || s == CheckStatus.error;
+
+    final nicknameError = isError(_nicknameStatus) ? nicknameMsg : null;
+    final emailError = isError(_emailStatus) ? emailMsg : null;
+
     return Scaffold(
       appBar: const CommonAppBar(title: '회원가입', showBackButton: true),
       body: SafeArea(
@@ -172,8 +178,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   return null;
                                 },
                                 showValidIcon: _nicknameStatus == CheckStatus.available,
-                                helperText: nicknameMsg,
+                                helperText: isError(_nicknameStatus) ? null : nicknameMsg,
                                 helperColor: nicknameColor,
+                                errorText: nicknameError,
                                 trailing: MovieLogButton(
                                   label: '중복 확인',
                                   isLoading: _nicknameStatus == CheckStatus.checking,
@@ -203,8 +210,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   return null;
                                 },
                                 showValidIcon: _emailStatus == CheckStatus.available,
-                                helperText: emailMsg,
+                                helperText: isError(_emailStatus) ? null : emailMsg,
                                 helperColor: emailColor,
+                                errorText: emailError,
                                 trailing: MovieLogButton(
                                   label: '중복 확인',
                                   isLoading: _emailStatus == CheckStatus.checking,
