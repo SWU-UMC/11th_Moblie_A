@@ -53,12 +53,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return emailRegex.hasMatch(email);
   }
 
-  Future<bool> _isNicknameAvailable(String nickname) {
-    return context.read<MemberCheckService>().checkNickname(nickname);
+  Future<bool> _isNicknameAvailable(String nickname) async {
+    // TEMP: 중복 UI 확인용. 확인 후 반드시 원복
+    await Future.delayed(const Duration(seconds: 1));
+    return nickname != 'dup';
+    // return context.read<MemberCheckService>().checkNickname(nickname);
   }
 
-  Future<bool> _isEmailAvailable(String email) {
-    return context.read<MemberCheckService>().checkEmail(email);
+  Future<bool> _isEmailAvailable(String email) async {
+    // TEMP: 중복 UI 확인용. 확인 후 반드시 원복
+    await Future.delayed(const Duration(seconds: 1));
+    return email != 'dup@test.com';
+    // return context.read<MemberCheckService>().checkEmail(email);
   }
 
   Future<void> _checkNickname() async {
