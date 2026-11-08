@@ -48,6 +48,17 @@ class AppRouter {
               );
           },
       ),
+      GoRoute(
+            path: '/my/ratings',
+            builder: (context, state) => ChangeNotifierProvider<MyRatingsViewModel>(
+              create: (context) => MyRatingsViewModel(
+                context.read<RatingApiService>(),
+                context.read<TmdbMovieService>(),
+                1,
+              )..load(),
+              child: const MyRatingsScreen(),
+            ),
+          ),
       ShellRoute(
         builder: (context, state, child) {
           return MainScreen(
@@ -76,17 +87,6 @@ class AppRouter {
                 context.read<TmdbMovieService>(),
               )..loadInitial(),
               child: const MovieListScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/my/ratings',
-            builder: (context, state) => ChangeNotifierProvider<MyRatingsViewModel>(
-              create: (context) => MyRatingsViewModel(
-                context.read<RatingApiService>(),
-                context.read<TmdbMovieService>(),
-                1,
-              )..load(),
-              child: const MyRatingsScreen(),
             ),
           ),
           GoRoute(
