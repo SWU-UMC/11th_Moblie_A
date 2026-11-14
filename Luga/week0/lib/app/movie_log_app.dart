@@ -7,7 +7,7 @@ import '../data/services/tmdb_movie_service.dart';
 import '../router/app_router.dart';
 import '../theme/app_theme.dart';
 import '../data/services/sign_up_service.dart';
-import '../data/view_model/learning_member_session.dart';
+import '../view_model/learning_member_session.dart';
 
 class MovieLogApp extends StatelessWidget {
   const MovieLogApp({super.key});
