@@ -25,7 +25,7 @@ class MovieLogApp extends StatelessWidget {
           create: (_) => RatingApiService(movieLogClient),
         ),
         ChangeNotifierProvider<LearningMemberSession>(
-          create: (_) => LearningMemberSession(),
+          create: (_) => LearningMemberSession()..restore(),
         ),
         Provider<SignUpService>(
           create: (_) => SignUpService(movieLogClient),

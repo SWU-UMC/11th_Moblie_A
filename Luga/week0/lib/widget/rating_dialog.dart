@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'movie_rating_input.dart';
 import '../theme/app_colors.dart';
-import 'movie_log_button.dart';
 
 int validateServerScore(double value) => value.round().clamp(1, 5);
 
@@ -57,6 +56,11 @@ class _RatingDialogState extends State<RatingDialog> {
         }
     }
 
+    OutlineInputBorder _border(Color color) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: color, width: 1.5),
+    );
+
     @override
     Widget build(BuildContext context) {
         final hasScore = _score > 0;
@@ -69,43 +73,51 @@ class _RatingDialogState extends State<RatingDialog> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 titlePadding: const EdgeInsets.fromLTRB(30, 28, 30, 0),
                 contentPadding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
-                actionsPadding: const EdgeInsets.fromLTRB(30, 12, 30, 24),
                 title: const Text(
-                    '영화는 어떠셨나요?',
+                    '평점을 남겨주세요',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 content: SingleChildScrollView(
                     child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                            MovieRatingInput(
-                                rating: _score.toDouble(),
-                                enabled: !_isSubmitting,
-                                onChanged: (value) => setState(() => _score = validateServerScore(value)),
-                            ),
-                            if(hasScore) ...[
-                                const SizedBox(height: 12),
-                                TextButton(
-                                    onPressed: _isSubmitting ? null : () => setState(() => _score = 0),
-                                    style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size.zero,
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    child: const Text(
-                                        '다시 선택하기',
-                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary),
-                                    ),
+                            Center(
+                                child: MovieRatingInput(
+                                    rating: _score.toDouble(),
+                                    enabled: !_isSubmitting,
+                                    onChanged: (value) => 
+                                        setState(() => _score = validateServerScore(value)),
                                 ),
-                            ],
-                            const SizedBox(height: 12),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                                '코멘트 (선택, 최대 500자)',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSecondary,
+                                ),
+                            ),
+                            const SizedBox(height: 8),
                             TextField(
                                 controller: _commentController,
-                                maxLines: 3,
+                                maxLines: 4,
                                 maxLength: 500,
                                 enabled: !_isSubmitting,
-                                decoration: const InputDecoration(hintText: '코멘트를 남겨보세요 (선택)'),
+                                decoration: InputDecoration(
+                                    hintText: '이 영화의 인상적인 장면은...',
+                                    hintStyle: const TextStyle(fontSize: 13, color: AppColors.outline),
+                                    counterText: '',
+                                    filled: true,
+                                    fillColor: AppColors.primaryLight,
+                                    contentPadding: const EdgeInsets.all(16),
+                                    border: _border(AppColors.primaryContainer),
+                                    enabledBorder: _border(AppColors.primaryContainer),
+                                    disabledBorder: _border(AppColors.primaryContainer),
+                                    focusedBorder: _border(AppColors.primaryContainer),
+                                ),
                             ),
                             if(_errorText != null) ...[
                                 const SizedBox(height: 8),
@@ -114,21 +126,61 @@ class _RatingDialogState extends State<RatingDialog> {
                                     style: const TextStyle(color: AppColors.error, fontSize: 13),
                                 ),
                             ],
+                            const SizedBox(height: 24),
+                            Row(
+                                children: [
+                                    Expanded(
+                                        child: FilledButton(
+                                            onPressed: _isSubmitting
+                                                ? null
+                                                : () => Navigator.pop(context, false),
+                                            style: FilledButton.styleFrom(
+                                                backgroundColor: AppColors.primaryContainer,
+                                                foregroundColor: AppColors.primary,
+                                                disabledBackgroundColor: AppColors.primaryContainer,
+                                                minimumSize: const Size.fromHeight(48),
+                                                shape: const StadiumBorder(),
+                                                textStyle: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w700,
+                                                ),
+                                            ),
+                                            child: const Text('취소'),
+                                        ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                        child: FilledButton(
+                                            onPressed: hasScore && !_isSubmitting ? _onConfirm : null,
+                                            style: FilledButton.styleFrom(
+                                                backgroundColor: AppColors.primary,
+                                                foregroundColor: Colors.white,
+                                                disabledBackgroundColor: _isSubmitting ? AppColors.primary : AppColors.primaryLight,
+                                                disabledForegroundColor: Colors.white,
+                                                minimumSize: const Size.fromHeight(48),
+                                                shape: const StadiumBorder(),
+                                                textStyle: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w700,
+                                                ),
+                                            ),
+                                            child: _isSubmitting
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                    ),
+                                                )
+                                                : const Text('확인'),
+                                        ),
+                                    ),
+                                ],
+                            ),
                         ],
                     ),
                 ),
-
-                actions: [
-                    MovieLogButton(
-                        label: '취소',
-                        onPressed: _isSubmitting ? null : () => Navigator.pop(context, false),
-                    ),
-                    MovieLogButton(
-                        label: '확인',
-                        isLoading: _isSubmitting,
-                        onPressed: hasScore && !_isSubmitting ? _onConfirm : null,
-                    ),
-                ],
             ),
         );
     }

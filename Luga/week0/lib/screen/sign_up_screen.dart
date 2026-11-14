@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import '../widget/labeled_text_field.dart';
@@ -7,6 +8,11 @@ import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
 import '../widget/common_app_bar.dart';
 import '../theme/app_colors.dart';
+import '../view_model/sign_up_view_model.dart' hide CheckStatus;
+import '../view_model/submit_status.dart';
+import '../view_model/learning_member_session.dart';
+import '../data/models/create_member_request.dart';
+import '../data/services/sign_up_service.dart';
 
 enum CheckStatus { idle, checking, available, duplicated, error }
 
@@ -36,11 +42,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
   CheckStatus _nicknameStatus = CheckStatus.idle;
   CheckStatus _emailStatus = CheckStatus.idle;
 
-  bool get _isNicknameFormatValid => _nicknameController.text.trim().length >= 2;
+  bool get _isNicknameFormatValid {
+    final length = _nicknameController.text.trim().length;
+    return length >= 2 && length <= 12;
+  }
+
+  bool _isPasswordValid(String value) {
+    return value.length >= 8 &&
+        RegExp(r'[a-z]').hasMatch(value) &&
+        RegExp(r'[A-Z]').hasMatch(value) &&
+        RegExp(r'[0-9]').hasMatch(value) &&
+        RegExp(r'[!@#$%^&*]').hasMatch(value);
+  }
+
   bool get _isEmailFormatValid => _isEmailValid(_emailController.text.trim());
 
   bool get _isFormValid {
-    final passwordValid = _passwordController.text.length >= 8;
+    final passwordValid = _isPasswordValid(_passwordController.text);
     return _isNicknameFormatValid &&
         _isEmailFormatValid &&
         passwordValid &&
@@ -55,17 +73,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<bool> _isNicknameAvailable(String nickname) async {
-    // TEMP: 중복 UI 확인용. 확인 후 반드시 원복
-    await Future.delayed(const Duration(seconds: 1));
-    return nickname != 'dup';
-    // return context.read<MemberCheckService>().checkNickname(nickname);
+    return context.read<SignUpService>().checkNickname(nickname);
   }
 
   Future<bool> _isEmailAvailable(String email) async {
-    // TEMP: 중복 UI 확인용. 확인 후 반드시 원복
-    await Future.delayed(const Duration(seconds: 1));
-    return email != 'dup@test.com';
-    // return context.read<MemberCheckService>().checkEmail(email);
+    return context.read<SignUpService>().checkEmail(email);
   }
 
   Future<void> _checkNickname() async {
@@ -126,11 +138,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
     };
   }
 
-  void _handleSubmit() {
-    final isValid = _formKey.currentState!.validate();
-    if (isValid && _isFormValid) {
-      // 실제 가입 요청은 이번 주차 범위가 아니므로 홈으로만 이동
-      context.pushReplacement('/home');
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate() || !_isFormValid) return;
+
+    final viewModel = context.read<SignUpViewModel>();
+    await viewModel.submit(CreateMemberRequest(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      nickname: _nicknameController.text.trim(),
+    ));
+    if(!mounted) return;
+
+    if(viewModel.submitStatus == SubmitStatus.success && viewModel.createdMemberId != null) {
+      context.read<LearningMemberSession>().setMemberId(viewModel.createdMemberId!);
+      context.go('/home');
+      return;
+    }
+
+    final message = viewModel.snackbarMessage;
+    if(message != null ){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
   }
 
@@ -205,10 +234,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 labelText: '닉네임',
                                 hintText: '닉네임을 입력해주세요',
                                 validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return '닉네임을 입력해주세요';
-                                  }
-                                  if (value.trim().length < 2) {
+                                  final trimmed = value?.trim() ?? '';
+                                  if (trimmed.isEmpty) return '닉네임을 입력해주세요';
+                                  if (trimmed.length < 2 || trimmed.length > 12) {
                                     return '닉네임은 2자 이상이어야 합니다';
                                   }
                                   return null;
@@ -276,8 +304,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   if (value == null || value.isEmpty) {
                                     return '비밀번호를 입력해주세요';
                                   }
-                                  if (value.length < 8) {
-                                    return '비밀번호는 8자 이상이어야 합니다';
+                                  if (!_isPasswordValid(value)) {
+                                    return '8자 이상, 대문자·소문자·숫자·특수문자(!@#\$%^&*)를 각각 포함해야 합니다';
                                   }
                                   return null;
                                 },
