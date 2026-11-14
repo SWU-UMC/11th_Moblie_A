@@ -5,6 +5,7 @@ import '../data/services/tmdb_movie_service.dart';
 import '../view_models/movie_view_models.dart';
 import '../widgets/tmdb_poster_image.dart';
 import 'my_page_screen.dart';
+import 'movie_detail_screen.dart';
 
 class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
@@ -69,20 +70,50 @@ class _StatusBody extends StatelessWidget {
     LoadStatus.success => success,
   };
 }
+
+
 class _MovieTile extends StatelessWidget {
   const _MovieTile({required this.movie});
+
   final TmdbMovieDto movie;
-  @override Widget build(BuildContext context) => InkWell(
-    onTap:()=>showDialog<void>(context:context,builder:(c)=>AlertDialog(
-      title:Text(movie.title),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Text(movie.overview.isEmpty?'줄거리 정보가 없어요.':movie.overview),
-        const SizedBox(height:12),Text('TMDB movieId: ${movie.id}'),
-        const SizedBox(height:8),const Text('평점 기능 연동 시 이 ID를 전달합니다.'),
-      ])),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('닫기'))],)),
-    child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Expanded(child:ClipRRect(borderRadius:BorderRadius.circular(12),child:SizedBox(width:double.infinity,child:TmdbPosterImage(path:movie.posterPath)))),
-      const SizedBox(height:5),Text(movie.title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.bold)),
-      Text('★ ${movie.voteAverage.toStringAsFixed(1)}',style:const TextStyle(fontSize:12)),
-    ]),
-  );
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MovieDetailScreen(movie: movie),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TmdbPosterImage(
+                    path: movie.posterPath,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              movie.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '★ ${movie.voteAverage.toStringAsFixed(1)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      );
 }

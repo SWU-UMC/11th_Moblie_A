@@ -7,10 +7,11 @@ import 'core/network/tmdb_client.dart';
 import 'core/network/movie_log_client.dart';
 
 import 'data/services/tmdb_movie_service.dart';
-import 'data/services/member_check_service.dart';
+import 'data/services/sign_up_service.dart';
 import 'data/services/rating_api_service.dart';
 
 import 'view_models/sign_up_view_model.dart';
+import 'view_models/learning_member_session.dart';
 
 import 'screens/register_screen.dart';
 
@@ -27,34 +28,37 @@ class MovieLogApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final movieLogClient = createMovieLogClient();
+
     return MultiProvider(
       providers: [
-        // 5주차 TMDB 영화 API
+        // TMDB 영화 API
         Provider<TmdbMovieService>(
           create: (_) => TmdbMovieService(
             createTmdbClient(),
           ),
         ),
 
-        // 6주차 닉네임·이메일 중복 확인 API
-        Provider<MemberCheckService>(
-          create: (_) => MemberCheckService(
-            createMovieLogClient(),
-          ),
+        // 7주차 회원가입 및 중복 확인 API
+        Provider<SignUpService>(
+          create: (_) => SignUpService(movieLogClient),
         ),
 
-        // 6주차 평점 조회 API
+        // 평점 API
         Provider<RatingApiService>(
-          create: (_) => RatingApiService(
-            createMovieLogClient(),
-          ),
+          create: (_) => RatingApiService(movieLogClient),
         ),
 
         // 회원가입 ViewModel
         ChangeNotifierProvider<SignUpViewModel>(
           create: (context) => SignUpViewModel(
-            context.read<MemberCheckService>(),
+            context.read<SignUpService>(),
           ),
+        ),
+
+        // 현재 학습용 회원 ID 저장
+        ChangeNotifierProvider<LearningMemberSession>(
+          create: (_) => LearningMemberSession(),
         ),
       ],
       child: MaterialApp(
