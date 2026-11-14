@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 class LearningMemberSession extends ChangeNotifier {
-    int? memberId;
+    int? _memberId;
     int? get memberId => _memberId;
 
     bool get isSignedUp => _memberId != null;

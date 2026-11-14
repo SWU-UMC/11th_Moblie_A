@@ -1,1 +1,1 @@
-enum SubmitStatus {idle, submitting, success, error};
+enum SubmitStatus {idle, submitting, success, error}
