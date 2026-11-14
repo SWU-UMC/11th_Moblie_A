@@ -179,10 +179,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const SizedBox(height: 24),
-                              Text(
-                                '환영합니다!\n간단한 정보만 입력하고 시작해보세요.',
+                              Text.rich(
+                                TextSpan(
+                                  style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+                                  children: [
+                                    TextSpan(
+                                      text: '환영합니다\n',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const TextSpan(text: '간단한 정보만 입력하고 시작해보세요.'),
+                                  ],
+                                ),
                                 textAlign: TextAlign.center,
-                                style: textTheme.bodyMedium,
                               ),
                               const SizedBox(height: 32),
 
