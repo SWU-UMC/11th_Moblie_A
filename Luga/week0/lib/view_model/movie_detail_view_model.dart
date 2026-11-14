@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../data/models/rating_dto.dart';
 import '../data/models/tmdb_movie_dto.dart';
 import '../data/services/rating_api_service.dart';
-import '../data/services/tmdb_movie_service.dart';
 import 'submit_status.dart';
 
 enum MovieDetailLoadStatus { idle, loading, success, notFound, error }
