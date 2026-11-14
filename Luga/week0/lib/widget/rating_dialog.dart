@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'movie_rating_input.dart';
 import '../theme/app_colors.dart';
+import 'movie_log_button.dart';
 
 int validateServerScore(double value) => value.round().clamp(1, 5);
 
 class RatingDialog extends StatefulWidget {
     const RatingDialog({
         super.key,
-        this.initialScore = ,
+        this.initialScore = 0,
         this.initialComment,
         required this.onSubmit});
 
@@ -21,8 +22,8 @@ class RatingDialog extends StatefulWidget {
 
 class _RatingDialogState extends State<RatingDialog> {
     late int _score = widget.initialScore;
-    late final _commetController = TextEditingController(text: widget.initialComment ?? '');
-    bool _iSubmitting = false;
+    late final _commentController = TextEditingController(text: widget.initialComment ?? '');
+    bool _isSubmitting = false;
     String? _errorText;
 
     @override
@@ -62,7 +63,7 @@ class _RatingDialogState extends State<RatingDialog> {
 
         return PopScope(
             canPop: !_isSubmitting,
-            child: AlterDialog(
+            child: AlertDialog(
                 backgroundColor: Colors.white,
                 surfaceTintColor: Colors.transparent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -72,7 +73,7 @@ class _RatingDialogState extends State<RatingDialog> {
                 title: const Text(
                     '영화는 어떠셨나요?',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fonSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 content: SingleChildScrollView(
                     child: Column(
@@ -89,7 +90,7 @@ class _RatingDialogState extends State<RatingDialog> {
                                     onPressed: _isSubmitting ? null : () => setState(() => _score = 0),
                                     style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
-                                        minimunSize: Size.zero,
+                                        minimumSize: Size.zero,
                                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
                                     child: const Text(
@@ -109,7 +110,7 @@ class _RatingDialogState extends State<RatingDialog> {
                             if(_errorText != null) ...[
                                 const SizedBox(height: 8),
                                 Text(
-                                    _errorText,
+                                    _errorText!,
                                     style: const TextStyle(color: AppColors.error, fontSize: 13),
                                 ),
                             ],

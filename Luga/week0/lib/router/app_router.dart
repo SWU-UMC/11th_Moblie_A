@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/services/tmdb_movie_service.dart';
 import '../view_model/movie_home_view_model.dart';
@@ -16,6 +16,9 @@ import '../view_model/my_ratings_view_model.dart';
 import '../view_model/sign_up_view_model.dart';
 import '../screen/movie_detail_loader.dart';
 import '../data/models/tmdb_movie_dto.dart';
+import '../data/services/sign_up_service.dart';
+import '../data/view_model/learning_member_session.dart';
+import '../screen/movie_detail_loader.dart';
 
 class AppRouter {
   AppRouter._();
@@ -36,7 +39,7 @@ class AppRouter {
           canPop: false,
           child: ChangeNotifierProvider<SignUpViewModel>(
             create: (context) => SignUpViewModel(
-              context.read<MemberApiService>(),
+              context.read<SignUpService>(),
             ),
             child: const SignUpScreen(),
           ),

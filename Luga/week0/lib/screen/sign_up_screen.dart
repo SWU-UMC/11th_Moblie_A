@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../widget/labeled_text_field.dart';
 import '../widget/movie_log_button.dart';
@@ -6,9 +8,6 @@ import '../widget/terms_checkbox.dart';
 import '../widget/submit_button.dart';
 import '../widget/common_app_bar.dart';
 import '../theme/app_colors.dart';
-import 'package:dio/dio.dart';
-import 'package:provider/provider.dart';
-import '../data/services/member_check_service.dart';
 
 enum CheckStatus { idle, checking, available, duplicated, error }
 

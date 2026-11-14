@@ -4,14 +4,12 @@ import 'package:provider/provider.dart';
 import '../data/models/tmdb_movie_dto.dart';
 import '../view_model/movie_detail_view_model.dart';
 import '../widget/common_app_bar.dart';
-import '../widget/error_view.dart';
-import '../widget/loading_view.dart';
 import '../widget/rating_dialog.dart';
 import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-    const MovieDetailScreen({super.key, required this.movieId});
+    const MovieDetailScreen({super.key});
 
     final int movieId;
 
@@ -38,21 +36,35 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     Future<void> _openRatingDialog() async {
-    final result = await showDialog<RatingResult>(
-        context: context,
-        builder: (context) => RatingDialog(movieId: widget.movieId),
-    );
+        final vm = context.read<MovieDetailViewModel>();
 
-    if (result != null && mounted) {
-        // 이후 단계: 평점 저장 시 result.movieId, result.rating을 그대로 사용
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('평점 ${result.rating}점을 남겼습니다 (movieId: ${result.movieId})'),
-                behavior: SnackBarBehavior.floating,
+        if (!vm.canSubmit) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('먼저 학습용 회원가입을 완료해 주세요.'),
+                    behavior: SnackBarBehavior.floating,
+                ),
+            );
+            return;
+        }
+
+        final saved = await showDialog<bool>(
+            context: context,
+            builder: (_) => RatingDialog(
+                onSubmit: (score, comment) => 
+                    vm.createRating(score: score, comment:comment),
             ),
         );
+
+        if(saved == true && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('평점을 등록했습니다'),
+                    behavior: SnackBarBehavior.floating,
+                ),
+            );
+        }
     }
-}
 
     PreferredSizeWidget _simpleAppBar() {
         return CommonAppBar(
@@ -66,28 +78,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     Widget build(BuildContext context) {
         final vm = context.watch<MovieDetailViewModel>();
 
-        switch (vm.status) {
-            case MovieDetailLoadStatus.idle:
-            case MovieDetailLoadStatus.loading:
-                return Scaffold(
-                    appBar: _simpleAppBar(),
-                    body: const LoadingView(),
-                );
-            case MovieDetailLoadStatus.notFound:
-                return Scaffold(
-                    appBar: _simpleAppBar(),
-                    body: const Center(child: Text('영화를 찾을 수 없습니다')),
-                );
-            case MovieDetailLoadStatus.error:
-                return Scaffold(
-                    appBar: _simpleAppBar(),
-                    body: ErrorView(
-                        onRetry: () => context.read<MovieDetailViewModel>().load(),
-                    ),
-                );
-            case MovieDetailLoadStatus.success:
-                return _buildContent(context, vm.movie!);
-        }
+        return _buildContent(context, vm.movie);
     }
 
     Widget _buildContent(BuildContext context, TmdbMovieDto movie) {

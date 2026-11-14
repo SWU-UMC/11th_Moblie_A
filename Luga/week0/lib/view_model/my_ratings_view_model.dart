@@ -94,8 +94,8 @@ class MyRatingsViewModel extends ChangeNotifier {
   }
 
   Future<void> updateRating({
-    required int ratingId;
-    required int score;
+    required int ratingId,
+    required int score,
     String? comment,
   }) async {
     try{
@@ -107,9 +107,9 @@ class MyRatingsViewModel extends ChangeNotifier {
       message = writeErrorMessage(error);
       notifyListeners();
       if(shouldRefreshAfterRatingError(error)) await load();
-      rethorw;
+      rethrow;
     }
-    await _refreshAFterWrite();
+    await _refreshAfterWrite();
   }
 
   Future<void> deleteRating(int ratingId) async {
