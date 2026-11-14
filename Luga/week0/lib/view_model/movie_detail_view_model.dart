@@ -22,17 +22,18 @@ class MovieDetailViewModel extends ChangeNotifier {
     bool get canSubmit => memberId != null;
 
     /// 성공하면 정상 반환, 실패하면 예외를 던집니다 (RatingDialog가 catch).
-    Future<void> createRating({required int score, String? comment}) {
-        final id = memberId,
+    Future<void> createRating({required int score, String? comment}) async {
+        final id = memberId;
+
         if(id == null) {
             submitStatus = SubmitStatus.error;
-            submitStatus = '먼저 회원가입을 완료해 주세요.';
+            submitMessage = '먼저 회원가입을 완료해 주세요.';
             _notify();
             throw StateError(submitMessage!);
         }
-        if(submitStatus == submitStatus.submitting) return;
+        if(submitStatus == SubmitStatus.submitting) return;
 
-        submitStatus = submitStatus.submitting;
+        submitStatus = SubmitStatus.submitting;
         submitMessage = null;
         _notify();
 
@@ -58,7 +59,7 @@ class MovieDetailViewModel extends ChangeNotifier {
     }
 
     void _notify() {
-        if(!disposed) notifyListeners();
+        if(!_disposed) notifyListeners();
     }
 
     @override
