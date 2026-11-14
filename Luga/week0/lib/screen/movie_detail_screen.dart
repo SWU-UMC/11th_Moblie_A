@@ -11,8 +11,6 @@ import '../theme/app_colors.dart';
 class MovieDetailScreen extends StatefulWidget {
     const MovieDetailScreen({super.key});
 
-    final int movieId;
-
     @override
     State<MovieDetailScreen> createState() => _MovieDetailScreenState();
 }
@@ -64,14 +62,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 ),
             );
         }
-    }
-
-    PreferredSizeWidget _simpleAppBar() {
-        return CommonAppBar(
-            title: '영화 상세',
-            showBackButton: true,
-            fallbackLocation: '/movies',
-        );
     }
 
     @override

@@ -18,7 +18,6 @@ import '../screen/movie_detail_loader.dart';
 import '../data/models/tmdb_movie_dto.dart';
 import '../data/services/sign_up_service.dart';
 import '../view_model/learning_member_session.dart';
-import '../screen/movie_detail_loader.dart';
 
 class AppRouter {
   AppRouter._();

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../models/common_response.dart';
 import '../models/rating_dto.dart';
 
 class RatingApiService {
@@ -70,4 +71,22 @@ bool shouldRefreshAfterRatingError(DioException error) {
   final data = error.response?.data;
   final code = data is Map<String, dynamic> ? data['code'] as String? : null;
   return code == 'COMMON403' || code == 'COMMON404';
+}
+
+class CreateRatingRequest {
+  const CreateRatingRequest({
+    required this.movieId,
+    required this.score,
+    this.comment,
+  });
+
+  final int movieId;
+  final int score;
+  final String? comment;
+
+  Map<String, dynamic> toJson() => {
+    'movieId': movieId,
+    'score': score,
+    'comment': comment,
+  };
 }

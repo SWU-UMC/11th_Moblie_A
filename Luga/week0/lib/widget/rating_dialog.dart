@@ -125,7 +125,7 @@ class _RatingDialogState extends State<RatingDialog> {
                     ),
                     MovieLogButton(
                         label: '확인',
-                        isLoading: _iSubmitting,
+                        isLoading: _isSubmitting,
                         onPressed: hasScore && !_isSubmitting ? _onConfirm : null,
                     ),
                 ],

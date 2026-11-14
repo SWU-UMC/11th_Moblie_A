@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../data/modles/sign_up_models.dart';
+import '../data/models/sign_up_result.dart';
+import '../data/models/create_member_request.dart';
 import '../data/services/sign_up_service.dart';
 import 'submit_status.dart';
 
