@@ -23,6 +23,7 @@ class MyRatingsViewModel extends ChangeNotifier {
   List<RatingWithMovie> ratings = const [];
   MyRatingsLoadStatus status = MyRatingsLoadStatus.idle;
   String? message;
+  String? refreshWarning;
 
   Future<void> load() async {
     final version = ++_requestVersion;
@@ -80,6 +81,47 @@ class MyRatingsViewModel extends ChangeNotifier {
     if (!_disposed && version == _requestVersion) {
       notifyListeners();
     }
+  }
+
+  Future<void> _refreshAfterWrite() async {
+    await load();
+    if (status == MyRatingsLoadStatus.error) {
+      refreshWarning = '저장은 완료됐지만 목록을 불러오지 못했습니다. 조회만 다시 시도해 주세요.';
+      notifyListeners();
+    } else {
+      refreshWarning = null;
+    }
+  }
+
+  Future<void> updateRating({
+    required int ratingId;
+    required int score;
+    String? comment,
+  }) async {
+    try{
+      await _service.updateRating(
+        memberId: memberId, ratingId: ratingId,
+        score: score, comment: comment,
+      );
+    } on DioException catch(error) {
+      message = writeErrorMessage(error);
+      notifyListeners();
+      if(shouldRefreshAfterRatingError(error)) await load();
+      rethorw;
+    }
+    await _refreshAFterWrite();
+  }
+
+  Future<void> deleteRating(int ratingId) async {
+    try{
+      await _service.deleteRating(memberId: memberId, ratingId: ratingId);
+    } on DioException catch (error) {
+      message = writeErrorMessage(error);
+      notifyListeners();
+      if (shouldRefreshAfterRatingError(error)) await load();
+      rethrow;
+    }
+    await _refreshAfterWrite();
   }
 
   @override

@@ -7,6 +7,8 @@ import '../core/network/tmdb_client.dart';
 import '../data/services/tmdb_movie_service.dart';
 import '../router/app_router.dart';
 import '../theme/app_theme.dart';
+import '../data/services/sign_up_service.dart';
+import '../data/session/learning_member_session.dart';
 
 class MovieLogApp extends StatelessWidget {
   const MovieLogApp({super.key});
@@ -25,6 +27,12 @@ class MovieLogApp extends StatelessWidget {
         ),
         Provider<RatingApiService>(
           create: (_) => RatingApiService(movieLogClient),
+        ),
+        ChangeNotifierProvider<LearningMemberSession>(
+          create: (_) => LearningMemberSession(),
+        ),
+        Provider<SignUpService>(
+          create: (_) => SignUpService(movieLogClient),
         ),
       ],
       child: MaterialApp.router(

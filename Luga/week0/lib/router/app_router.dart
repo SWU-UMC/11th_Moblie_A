@@ -3,23 +3,27 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import '../data/services/tmdb_movie_service.dart';
 import '../view_model/movie_home_view_model.dart';
-import '../view_model/movie_detail_view_model.dart';
 import '../view_model/movie_list_model.dart';
 import '../screen/start_screen.dart';
 import '../screen/sign_up_screen.dart';
 import '../screen/home_screen.dart';
 import '../screen/movie_list_screen.dart';
-import '../screen/movie_detail_screen.dart';
 import '../screen/profile_screen.dart';
 import '../screen/main_screen.dart';
 import '../screen/my_ratings_screen.dart';
 import '../data/services/rating_api_service.dart';
 import '../view_model/my_ratings_view_model.dart';
+import '../view_model/sign_up_view_model.dart';
+import '../screen/movie_detail_loader.dart';
+import '../data/models/tmdb_movie_dto.dart';
 
 class AppRouter {
   AppRouter._();
 
+  static final rootNavigatorKey = GlobalKey<NavigatorState>();
+
   static final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/start',
     routes: [
       GoRoute(
@@ -30,23 +34,13 @@ class AppRouter {
         path: '/signup',
         builder: (context, state) => PopScope(
           canPop: false,
-          child: const SignUpScreen(),
+          child: ChangeNotifierProvider<SignUpViewModel>(
+            create: (context) => SignUpViewModel(
+              context.read<MemberApiService>(),
+            ),
+            child: const SignUpScreen(),
+          ),
         ),
-      ),
-      // 상세 화면은 하단 NavigationBar 없이 독립된 화면으로 표시
-      GoRoute(
-          path: '/movies/:movieId',
-          builder: (context, state) {
-              final movieId = int.tryParse(state.pathParameters['movieId'] ?? '') ?? -1;
-              return ChangeNotifierProvider<MovieDetailViewModel>(
-                  key: ValueKey(movieId),
-                  create: (context) => MovieDetailViewModel(
-                      context.read<TmdbMovieService>(),
-                      movieId,
-                  )..load(),
-                  child: MovieDetailScreen(movieId: movieId),
-              );
-          },
       ),
       GoRoute(
             path: '/my/ratings',
@@ -88,10 +82,53 @@ class AppRouter {
               )..loadInitial(),
               child: const MovieListScreen(),
             ),
+            routes: [
+              GoRoute(
+                path: ':movieId',
+                parentNavigatorKey: rootNavigatorKey,
+                builder: (context, state) {
+                  final id = int.tryParse(state.pathParameters['movieId'] ?? '');
+                  if (id == null || id < 1) {
+                    return const Scaffold(
+                      body: Center(child: Text('영화 ID가 올바르지 않습니다.')),
+                    );
+                  }
+                  final extra = state.extra;
+                  return MovieDetailLoader(
+                    key: ValueKey(id),
+                    movieId: id,
+                    initialMovie: extra is TmdbMovieDto && extra.id == id ? extra : null,
+                  );
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/my',
             builder: (context, state) => const ProfileScreen(),
+            routes: [
+              GoRoute(
+                path: 'ratings',
+                parentNavigatorKey: rootNavigatorKey,
+                builder: (context, state) {
+                  final id = context.read<LearningMemberSession>().memberId;
+                  if(id == null) {
+                    return Scaffold(
+                      appBar: AppBar(centerTitle: true, title: const Text('내가 등록한 평점')),
+                      body: const Center(child: Text('학습용 회원가입이 필요합니다.')),
+                    );
+                  }
+                  return ChangeNotifierProvider<MyRatingsViewModel>(
+                    create: (context) => MyRatingsViewModel(
+                      context.read<RatingApiService>(),
+                      context.read<TmdbMovieService>(),
+                      id,
+                    )..load(),
+                    child: const MyRatingsScreen(),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),

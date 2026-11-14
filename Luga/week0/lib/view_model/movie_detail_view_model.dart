@@ -6,14 +6,13 @@ import '../data/services/tmdb_movie_service.dart';
 enum MovieDetailLoadStatus { idle, loading, success, notFound, error }
 
 class MovieDetailViewModel extends ChangeNotifier {
-    MovieDetailViewModel(this._service, this.movieId);
+    MovieDetailViewModel(this._ratingService, this.memberId, this.movie);
 
-    final TmdbMovieService _service;
-    final int movieId;
-
-    TmdbMovieDto? movie;
-    MovieDetailLoadStatus status = MovieDetailLoadStatus.idle;
-
+    final RatingApiService _ratingService;
+    final int? memberId;
+    final TmdbMovieDto movie;
+    SubmitStatus submitStatus = SubmitStatus.idle;
+    String? submitMessage;
     bool _disposed = false;
 
     Future<void> load() async {
