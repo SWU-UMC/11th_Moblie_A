@@ -1,0 +1,106 @@
+import 'package:dio/dio.dart';
+import '../models/common_response.dart';
+import '../models/rating_dto.dart';
+
+class RatingApiService {
+  RatingApiService(this._dio);
+  final Dio _dio;
+
+  Future<List<RatingDto>> fetchMyRatings(int memberId) async {
+    final response = await _dio.get('/v5/members/$memberId/ratings');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((item) => RatingDto.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> createRating({
+    required int memberId,
+    required CreateRatingRequest request,
+  }) async {
+    final response = await _dio.post(
+      '/v6/members/$memberId/ratings',
+      data: request.toJson(),
+    );
+    if(response.statusCode != 201) {
+      throw StateError('예상하지 못한 등록 응답: ${response.statusCode}');
+    }
+  }
+
+  Future<void> updateRating({
+    required int memberId,
+    required int ratingId,
+    required int score,
+    String? comment,
+  }) async {
+    await _dio.patch(
+      '/v6/members/$memberId/ratings/$ratingId',
+      data: {'score': score, 'comment': comment},
+    );
+  }
+
+  Future<void> deleteRating({
+    required int memberId,
+    required int ratingId,
+  }) async {
+    final response = await _dio.delete(
+      '/v6/members/$memberId/ratings/$ratingId',
+    );
+    if(response.statusCode != 204) {
+      throw StateError('예상하지 못한 삭제 응답: ${response.statusCode}');
+    }
+  }
+}
+
+String writeRatingErrorMessage(DioException error) {
+  if(error.response == null) {
+    return '네트워크 연결을 확인해 주세요.';
+  }
+  final data = error.response?.data;
+  final code = data is Map<String, dynamic> ? data['code'] as String? : null;
+
+  return switch(code) {
+    'COMMON403' => '권한이 없어 처리할 수 없습니다.',
+    'COMMON404' => '대상을 찾을 수 없습니다.',
+    _ => writeErrorMessage(error),
+  };
+}
+
+String writeMyRatingsErrorMessage(DioException error) {
+  final status = error.response?.statusCode;
+  if (status == 400) return 'memberId 형식을 다시 확인해 주세요.';
+  if (status == 404) return '존재하지 않는 회원입니다.';
+  return '평점을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
+
+String writeErrorMessage(DioException error) {
+  final data = error.response?.data;
+  final common = data is Map<String, dynamic>
+    ? CommonResponse<Object?>.fromJson(data, (value) => value)
+    : null;
+  return common?.message ?? '요청에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+}
+
+bool shouldRefreshAfterRatingError(DioException error) {
+  final data = error.response?.data;
+  final code = data is Map<String, dynamic> ? data['code'] as String? : null;
+  return code == 'COMMON403' || code == 'COMMON404';
+}
+
+class CreateRatingRequest {
+  const CreateRatingRequest({
+    required this.movieId,
+    required this.score,
+    this.comment,
+  });
+
+  final int movieId;
+  final int score;
+  final String? comment;
+
+  Map<String, dynamic> toJson() => {
+    'movieId': movieId,
+    'score': score,
+    'comment': comment,
+  };
+}
