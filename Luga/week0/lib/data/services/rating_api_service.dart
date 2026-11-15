@@ -52,6 +52,20 @@ class RatingApiService {
   }
 }
 
+String writeRatingErrorMessage(DioException error) {
+  if(error.response == null) {
+    return '네트워크 연결을 확인해 주세요.';
+  }
+  final data = error.response?.data;
+  final code = data is Map<String, dynamic> ? data['code'] as String? : null;
+
+  return switch(code) {
+    'COMMON403' => '권한이 없어 처리할 수 없습니다.',
+    'COMMON404' => '대상을 찾을 수 없습니다.',
+    _ => writeErrorMessage(error),
+  };
+}
+
 String writeMyRatingsErrorMessage(DioException error) {
   final status = error.response?.statusCode;
   if (status == 400) return 'memberId 형식을 다시 확인해 주세요.';

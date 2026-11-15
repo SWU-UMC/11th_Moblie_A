@@ -55,7 +55,7 @@ class _RatingList extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
         final textTheme = Theme.of(context).textTheme;
-        final notice = viewModel.message;
+        final notice = viewModel.refreshWarning ?? viewModel.message;
 
         return ListView(
             padding: const EdgeInsets.all(24),
@@ -143,6 +143,7 @@ class _RatingTile extends StatelessWidget {
 
     @override
     Widget build(BuildContext context) {
+        final busy = context.select<MyRatingsViewModel, bool>((vm) => vm.isWriting);
         final textTheme = Theme.of(context).textTheme;
         final movie = entry.movie;
         final rating = entry.rating;
@@ -211,14 +212,14 @@ class _RatingTile extends StatelessWidget {
                                 label: '수정',
                                 background: AppColors.primaryContainer,
                                 foreground: AppColors.primary,
-                                onPressed: () => _edit(context),
+                                onPressed: busy ? null : () => _edit(context),
                             ),
                             const SizedBox(height: 8),
                             _ActionButton(
                                 label: '삭제',
                                 background: AppColors.errorBackground.withValues(alpha: 0.5),
                                 foreground: AppColors.error,
-                                onPressed: () => _delete(context),
+                                onPressed: busy ? null : () => _delete(context),
                             ),
                         ],
                     ),
@@ -253,7 +254,7 @@ class _ActionButton extends StatelessWidget {
     final String label;
     final Color background;
     final Color foreground;
-    final VoidCallback onPressed;
+    final VoidCallback? onPressed;
 
     @override
     Widget build(BuildContext context) {

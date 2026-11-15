@@ -61,12 +61,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final submitting = 
       context.read<SignUpViewModel>().submitStatus == SubmitStatus.submitting;
     final passwordValid = _isPasswordValid(_passwordController.text);
-    return _isNicknameFormatValid &&
-        _isEmailFormatValid &&
-        passwordValid &&
-        _nicknameStatus == CheckStatus.available &&
-        _emailStatus == CheckStatus.available &&
-        _agreedToTerms;
+    return !submitting && 
+      _isNicknameFormatValid &&
+      _isEmailFormatValid &&
+      passwordValid &&
+      _nicknameStatus == CheckStatus.available &&
+      _emailStatus == CheckStatus.available &&
+      _agreedToTerms;
   }
 
   bool _isEmailValid(String email) {

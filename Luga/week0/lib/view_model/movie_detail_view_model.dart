@@ -49,11 +49,16 @@ class MovieDetailViewModel extends ChangeNotifier {
         } on DioException catch (error) {
             if(_disposed) return;
             submitStatus = SubmitStatus.error;
-            submitMessage = writeErrorMessage(error);
+            submitMessage = writeRatingErrorMessage(error);
             _notify();
-            rethrow;
+            throw StateError(submitMessage!);
         }
         _notify();
+    }
+
+    void clearSubmitState() {
+        submitStatus = SubmitStatus.idle;
+        submitMessage = null;
     }
 
     void _notify() {

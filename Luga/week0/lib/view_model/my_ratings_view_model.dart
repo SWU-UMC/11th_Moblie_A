@@ -17,32 +17,32 @@ class MyRatingsViewModel extends ChangeNotifier {
   final Map<int, TmdbMovieDto?> _movieCache = {};
   int _requestVersion = 0;
   bool _disposed = false;
+  bool _isWriting = false;
+  bool get isWriting => _isWriting;
 
   List<RatingWithMovie> ratings = const [];
   MyRatingsLoadStatus status = MyRatingsLoadStatus.idle;
   String? message;
   String? refreshWarning;
 
-  Future<void> load() async {
+  Future<void> load({bool silent = false}) async {
     final version = ++_requestVersion;
-    status = MyRatingsLoadStatus.loading;
+    final keepList = silent && ratings.isNotEmpty;
+    if(!keepList) status = MyRatingsLoadStatus.loading;
     message = null;
-    notifyListeners();
+    refreshWarning = null;
+    _notify();
 
     try {
       final rawRatings = await _service.fetchMyRatings(memberId);
-      if (_disposed || version != _requestVersion) {
-        return;
-      }
+      if (_disposed || version != _requestVersion) return;
 
       final entries = <RatingWithMovie>[];
       var missingMovies = 0;
 
       // 같은 movieId는 캐시를 쓰고, 영화 조회 실패가 평점 목록을 지우지 않습니다.
       for (final rating in rawRatings) {
-        if (_disposed || version != _requestVersion) {
-          return;
-        }
+        if (_disposed || version != _requestVersion) return;
         if (!_movieCache.containsKey(rating.movieId)) {
           try {
             _movieCache[rating.movieId] =
@@ -52,15 +52,11 @@ class MyRatingsViewModel extends ChangeNotifier {
           }
         }
         final movie = _movieCache[rating.movieId];
-        if (movie == null) {
-          missingMovies++;
-        }
+        if (movie == null) missingMovies++;
         entries.add(RatingWithMovie(rating: rating, movie: movie));
       }
 
-      if (_disposed || version != _requestVersion) {
-        return;
-      }
+      if (_disposed || version != _requestVersion) return;
       ratings = entries;
       status = entries.isEmpty
           ? MyRatingsLoadStatus.empty
@@ -69,57 +65,67 @@ class MyRatingsViewModel extends ChangeNotifier {
         message = '일부 영화 정보를 가져오지 못해 제목·포스터를 대신 표시합니다.';
       }
     } on DioException catch (error) {
-      if (_disposed || version != _requestVersion) {
-        return;
+        if(_disposed || version != _requestVersion) return;
+        if(keepList) {
+          refreshWarning = '저장은 완료했지만 목록을 불러오지 못했습니다. 새로고침해 주세요.';
+        } else {
+          status = MyRatingsLoadStatus.error;
+          message = writeMyRatingsErrorMessage(error);
+        }
       }
-      status = MyRatingsLoadStatus.error;
-      message = writeMyRatingsErrorMessage(error);
-    }
 
     if (!_disposed && version == _requestVersion) {
-      notifyListeners();
+      _notify();
     }
   }
 
-  Future<void> _refreshAfterWrite() async {
-    await load();
-    if (status == MyRatingsLoadStatus.error) {
-      refreshWarning = '저장은 완료됐지만 목록을 불러오지 못했습니다. 조회만 다시 시도해 주세요.';
-      notifyListeners();
-    } else {
-      refreshWarning = null;
-    }
-  }
+  Future<void> _refreshAfterWrite() => load(silent: true);
 
   Future<void> updateRating({
     required int ratingId,
     required int score,
     String? comment,
   }) async {
+    if(_isWriting) throw StateError('이미 처리 중입니다.');
+    _isWriting = true;
+    _notify();
     try{
       await _service.updateRating(
         memberId: memberId, ratingId: ratingId,
         score: score, comment: comment,
       );
     } on DioException catch(error) {
-      message = writeErrorMessage(error);
-      notifyListeners();
-      if(shouldRefreshAfterRatingError(error)) await load();
-      rethrow;
+      final errorMessage = writeRatingErrorMessage(error);
+      if(shouldRefreshAfterRatingError(error)) await load(silent: true);
+      message = errorMessage;
+      _isWriting = false;
+      _notify();
+      throw StateError(errorMessage);
     }
+    _isWriting = false;
     await _refreshAfterWrite();
   }
 
   Future<void> deleteRating(int ratingId) async {
+    if (_isWriting) return;
+    _isWriting = true;
+    _notify();
     try{
       await _service.deleteRating(memberId: memberId, ratingId: ratingId);
     } on DioException catch (error) {
-      message = writeErrorMessage(error);
-      notifyListeners();
-      if (shouldRefreshAfterRatingError(error)) await load();
+      final errorMessage = writeRatingErrorMessage(error);
+      if (shouldRefreshAfterRatingError(error)) await load(silent: true);
+      message = errorMessage;
+      _isWriting = false;
+      _notify();
       rethrow;
     }
+    _isWriting = false;
     await _refreshAfterWrite();
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
   }
 
   @override

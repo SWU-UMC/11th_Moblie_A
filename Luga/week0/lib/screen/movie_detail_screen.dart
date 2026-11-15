@@ -7,6 +7,7 @@ import '../widget/common_app_bar.dart';
 import '../widget/rating_dialog.dart';
 import '../widget/responsive_container.dart';
 import '../theme/app_colors.dart';
+import '../view_model/submit_status.dart';
 
 class MovieDetailScreen extends StatefulWidget {
     const MovieDetailScreen({super.key});
@@ -46,18 +47,24 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             return;
         }
 
+        vm.clearSubmitState();
         final saved = await showDialog<bool>(
             context: context,
+            barrierDismissible: false,
             builder: (_) => RatingDialog(
                 onSubmit: (score, comment) => 
                     vm.createRating(score: score, comment:comment),
             ),
         );
+        if(!mounted) return;
 
-        if(saved == true && mounted) {
+        final message = saved == true
+            ? '평점을 등록했습니다.'
+            : (vm.submitStatus == SubmitStatus.error ? vm.submitMessage : null);
+        if(message != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('평점을 등록했습니다'),
+                SnackBar(
+                    content: Text(message),
                     behavior: SnackBarBehavior.floating,
                 ),
             );

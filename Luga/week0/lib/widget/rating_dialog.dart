@@ -47,11 +47,13 @@ class _RatingDialogState extends State<RatingDialog> {
             await widget.onSubmit(_score, trimmed.isEmpty ? null : trimmed);
             if (!mounted) return;
             Navigator.pop(context, true);
-        } catch(_) {
+        } catch(error) {
             if(!mounted) return;
             setState(() {
                 _isSubmitting = false;
-                _errorText = '저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+                _errorText = error is StateError
+                    ? error.message
+                    : '저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
             });
         }
     }
