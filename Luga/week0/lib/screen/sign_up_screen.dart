@@ -58,6 +58,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool get _isEmailFormatValid => _isEmailValid(_emailController.text.trim());
 
   bool get _isFormValid {
+    final submitting = 
+      context.read<SignUpViewModel>().submitStatus == SubmitStatus.submitting;
     final passwordValid = _isPasswordValid(_passwordController.text);
     return _isNicknameFormatValid &&
         _isEmailFormatValid &&
@@ -157,6 +159,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final message = viewModel.snackbarMessage;
     if(message != null ){
+      setState(() {
+        if(message.contains('이메일')) {
+          _duplicatedEmails.add(_emailController.text.trim());
+          _emailStatus = CheckStatus.duplicated;
+        } else if (message.contains('닉네임')) {
+            _duplicatedNicknams.add(_nicknameController.text.trim());
+            _nicknameStatus = CheckStatus.duplicated;
+        }
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
@@ -176,6 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final signUpVm = context.watch<SignUpViewModel>();
     final textTheme = Theme.of(context).textTheme;
     final (nicknameMsg, nicknameColor) = _message(_nicknameStatus, '닉네임');
     final (emailMsg, emailColor) = _message(_emailStatus, '이메일');
@@ -213,7 +225,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
                                   children: [
                                     TextSpan(
-                                      text: '환영합니다\n',
+                                      text: '환영합니다!\n',
                                       style: textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.textPrimary,
@@ -237,7 +249,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   final trimmed = value?.trim() ?? '';
                                   if (trimmed.isEmpty) return '닉네임을 입력해주세요';
                                   if (trimmed.length < 2 || trimmed.length > 12) {
-                                    return '닉네임은 2자 이상이어야 합니다';
+                                    return '닉네임은 2~12자여야 합니다';
                                   }
                                   return null;
                                 },
@@ -310,7 +322,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   return null;
                                 },
                                 showValidIcon: false,
-                                onChanged: (_) => setState(() {}),
+                                errorText: signUpVm.passwordErrorText,
+                                onChanged: (_) {
+                                  context.read<SignUpViewModel>().onPasswordChanged();
+                                  setState(() {});
+                                },
                               ),
                               const SizedBox(height: 16),
                             ],
