@@ -81,6 +81,65 @@ class _RatingTile extends StatelessWidget {
 
     static const _imageBase = 'https://image.tmdb.org/t/p/w185';
 
+    Future<void> _edit(BuildContext context) async {
+        final viewModel = context.read<MyRatingsViewModel>();
+        final rating = entry.rating;
+
+        final saved = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => RatingDialog(
+                initialScore: rating.score,
+                inititialComment: rating.comment,
+                onSubmit: (score, comment) => viewModel.updateRating(
+                    ratingId: rating.ratingId,
+                    score: score,
+                    comment: comment,
+                ),
+            ),
+        );
+
+        if (saved == true && context.mounted) {
+            ScaffoldMessanger.of(context).showSnackBar(
+                const SnackBar(context: Test('평점을 수정했습니다.')),
+            );
+        }
+    }
+
+    Future<void> _delete(BuildContext context) async {
+        final viewModel = context.read<MyRatingsViewModel>();
+
+        final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                title: const Text('평점을 삭제할까요?'),
+                content: const Text('삭제한 평점은 되돌릴 수 없습니다.'),
+                actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('취소'),
+                    ),
+                    TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text('삭제', style: TextStyle(color: AppColors.error)),
+                    ),
+                ],
+            ),
+        );
+        if(confirmed != true) return;
+        
+        try{
+            await viewModel.deleteRating(entry.rating.ratingId);
+        } catch(_) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(viewModel.message ?? '삭제하지 못했습니다.')),
+            );
+        }
+    }
+
     @override
     Widget build(BuildContext context) {
         final textTheme = Theme.of(context).textTheme;
@@ -93,8 +152,8 @@ class _RatingTile extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
                 color: AppColors.surfaceLowest,
-                border: Border.all(color: AppColors.outline),
-                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primaryContainer, width: 1.5),
+                borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,33 +178,51 @@ class _RatingTile extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                                 Text(
-                                    movie?.title ?? '영화 정보를 불러오지 못했어요',
+                                    movie?.title ?? '영화 #${rating.movieId}',
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: textTheme.titleMedium,
+                                    style: textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                    ),
                                 ),
-                                if(movie == null) ...[
-                                    const SizedBox(height: 2),
-                                    Text('movieId: ${rating.movieId}', style: textTheme.bodyMedium),
-                                ],
                                 const SizedBox(height: 6),
-                                Row(
-                                    children: [
-                                        Text(
-                                            '별점 ${rating.score} / 5',
-                                            style: textTheme.bodyMedium?.copyWith(color: AppColors.primary),
-                                        ),
-                                    ],
+                                Text(
+                                    '별점 ${rating.score} / 5',
+                                    style: textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
                                 ),
                                 if(comment != null && comment.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    Text(comment, style: textTheme.bodyMedium),
+                                    Text(
+                                        comment,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                                    ),
                                 ],
                             ],
                         ),
                     ),
-                ],
-            ),
+                    const SizedBox(width: 8),
+                    Column(
+                        children: [
+                            _ActionButton(
+                                label: '수정',
+                                background: AppColors.primaryContainer,
+                                foreground: AppColors.primary,
+                                onPressed: () => _edit(context),
+                            ),
+                            const SizedBox(height: 8),
+                            _ActionButton(
+                                label: '삭제',
+                                background: AppColors.errorBackground.withValues(alpha: 0.5),
+                                foreground: AppColors.error,
+                                onPressed: () => _delete(context),
+                            ),
+                        ],
+                    ),
+                ],,
+            ),,
         );
     }
 }
@@ -159,6 +236,41 @@ class _PosterPlaceholder extends StatelessWidget {
             color: AppColors.primaryLight,
             child: const Center(
                 child: Icon(Icons.movie_outlined, size: 28, color: AppColors.primary),
+            ),
+        );
+    }
+}
+
+class _ActionButton extends StatelessWidget {
+    const _ActionButton({
+        required this.label,
+        required this.background,
+        required this.foreground,
+        required this.onPressed,
+    });
+
+    final String label;
+    final Color background;
+    final Color foreground;
+    final VoidCallback onPressed;
+
+    @override
+    Widget build(BuildContext context) {
+        return SizedBox(
+            width: 56,
+            height: 36,
+            child: TextButton(
+                onPressed: onPressed,
+                style: TextButton.styleFrom(
+                    backgroundColor: background,
+                    foregroundColor: foreground,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+                child: Text(label),
             ),
         );
     }
