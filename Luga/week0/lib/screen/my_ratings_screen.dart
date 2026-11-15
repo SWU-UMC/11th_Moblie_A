@@ -8,6 +8,7 @@ import '../widget/empty_view.dart';
 import '../widget/error_view.dart';
 import '../widget/loading_view.dart';
 import '../widget/responsive_container.dart';
+import '../widget/rating_dialog.dart';
 
 class MyRatingsScreen extends StatelessWidget {
     const MyRatingsScreen({super.key});
@@ -90,7 +91,7 @@ class _RatingTile extends StatelessWidget {
             barrierDismissible: false,
             builder: (_) => RatingDialog(
                 initialScore: rating.score,
-                inititialComment: rating.comment,
+                initialComment: rating.comment,
                 onSubmit: (score, comment) => viewModel.updateRating(
                     ratingId: rating.ratingId,
                     score: score,
@@ -100,8 +101,8 @@ class _RatingTile extends StatelessWidget {
         );
 
         if (saved == true && context.mounted) {
-            ScaffoldMessanger.of(context).showSnackBar(
-                const SnackBar(context: Test('평점을 수정했습니다.')),
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('평점을 수정했습니다.')),
             );
         }
     }
@@ -221,8 +222,8 @@ class _RatingTile extends StatelessWidget {
                             ),
                         ],
                     ),
-                ],,
-            ),,
+                ],
+            ),
         );
     }
 }
