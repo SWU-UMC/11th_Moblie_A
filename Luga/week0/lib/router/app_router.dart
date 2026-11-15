@@ -44,17 +44,6 @@ class AppRouter {
           ),
         ),
       ),
-      GoRoute(
-            path: '/my/ratings',
-            builder: (context, state) => ChangeNotifierProvider<MyRatingsViewModel>(
-              create: (context) => MyRatingsViewModel(
-                context.read<RatingApiService>(),
-                context.read<TmdbMovieService>(),
-                1,
-              )..load(),
-              child: const MyRatingsScreen(),
-            ),
-          ),
       ShellRoute(
         builder: (context, state, child) {
           return MainScreen(

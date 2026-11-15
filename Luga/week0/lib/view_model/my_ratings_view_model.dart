@@ -5,8 +5,6 @@ import '../data/models/tmdb_movie_dto.dart';
 import '../data/services/rating_api_service.dart';
 import '../data/services/tmdb_movie_service.dart';
 
-const int sampleMemberId = 1; // 인증된 '내 계정'이 아닌 학습용 데이터입니다.
-
 enum MyRatingsLoadStatus { idle, loading, success, empty, error }
 
 class MyRatingsViewModel extends ChangeNotifier {

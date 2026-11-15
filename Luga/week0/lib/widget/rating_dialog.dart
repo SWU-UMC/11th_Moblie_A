@@ -70,115 +70,119 @@ class _RatingDialogState extends State<RatingDialog> {
             child: AlertDialog(
                 backgroundColor: Colors.white,
                 surfaceTintColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24), // 추가
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                titlePadding: const EdgeInsets.fromLTRB(30, 28, 30, 0),
-                contentPadding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
+                titlePadding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 title: const Text(
                     '평점을 남겨주세요',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-                content: SingleChildScrollView(
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                            Center(
-                                child: MovieRatingInput(
-                                    rating: _score.toDouble(),
-                                    enabled: !_isSubmitting,
-                                    onChanged: (value) => 
-                                        setState(() => _score = validateServerScore(value)),
-                                ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                                '코멘트 (선택, 최대 500자)',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                                controller: _commentController,
-                                maxLines: 4,
-                                maxLength: 500,
-                                enabled: !_isSubmitting,
-                                decoration: InputDecoration(
-                                    hintText: '이 영화의 인상적인 장면은...',
-                                    hintStyle: const TextStyle(fontSize: 13, color: AppColors.outline),
-                                    counterText: '',
-                                    filled: true,
-                                    fillColor: AppColors.primaryLight,
-                                    contentPadding: const EdgeInsets.all(16),
-                                    border: _border(AppColors.primaryContainer),
-                                    enabledBorder: _border(AppColors.primaryContainer),
-                                    disabledBorder: _border(AppColors.primaryContainer),
-                                    focusedBorder: _border(AppColors.primaryContainer),
-                                ),
-                            ),
-                            if(_errorText != null) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                    _errorText!,
-                                    style: const TextStyle(color: AppColors.error, fontSize: 13),
-                                ),
-                            ],
-                            const SizedBox(height: 24),
-                            Row(
-                                children: [
-                                    Expanded(
-                                        child: FilledButton(
-                                            onPressed: _isSubmitting
-                                                ? null
-                                                : () => Navigator.pop(context, false),
-                                            style: FilledButton.styleFrom(
-                                                backgroundColor: AppColors.primaryContainer,
-                                                foregroundColor: AppColors.primary,
-                                                disabledBackgroundColor: AppColors.primaryContainer,
-                                                minimumSize: const Size.fromHeight(48),
-                                                shape: const StadiumBorder(),
-                                                textStyle: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w700,
-                                                ),
-                                            ),
-                                            child: const Text('취소'),
-                                        ),
+                content: SizedBox(
+                    width: 420,
+                    child: SingleChildScrollView(
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                                Center(
+                                    child: MovieRatingInput(
+                                        rating: _score.toDouble(),
+                                        enabled: !_isSubmitting,
+                                        onChanged: (value) => 
+                                            setState(() => _score = validateServerScore(value)),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                        child: FilledButton(
-                                            onPressed: hasScore && !_isSubmitting ? _onConfirm : null,
-                                            style: FilledButton.styleFrom(
-                                                backgroundColor: AppColors.primary,
-                                                foregroundColor: Colors.white,
-                                                disabledBackgroundColor: _isSubmitting ? AppColors.primary : AppColors.primaryLight,
-                                                disabledForegroundColor: Colors.white,
-                                                minimumSize: const Size.fromHeight(48),
-                                                shape: const StadiumBorder(),
-                                                textStyle: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w700,
-                                                ),
-                                            ),
-                                            child: _isSubmitting
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        color: Colors.white,
-                                                    ),
-                                                )
-                                                : const Text('확인'),
-                                        ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Text(
+                                    '코멘트 (선택, 최대 500자)',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textSecondary,
+                                    ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                    controller: _commentController,
+                                    maxLines: 4,
+                                    maxLength: 500,
+                                    enabled: !_isSubmitting,
+                                    decoration: InputDecoration(
+                                        hintText: '이 영화의 인상적인 장면은...',
+                                        hintStyle: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                        counterText: '',
+                                        filled: true,
+                                        fillColor: AppColors.primaryLight,
+                                        contentPadding: const EdgeInsets.all(16),
+                                        border: _border(AppColors.primaryContainer),
+                                        enabledBorder: _border(AppColors.primaryContainer),
+                                        disabledBorder: _border(AppColors.primaryContainer),
+                                        focusedBorder: _border(AppColors.primaryContainer),
+                                    ),
+                                ),
+                                if(_errorText != null) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                        _errorText!,
+                                        style: const TextStyle(color: AppColors.error, fontSize: 13),
                                     ),
                                 ],
-                            ),
-                        ],
+                                const SizedBox(height: 24),
+                                Row(
+                                    children: [
+                                        Expanded(
+                                            child: FilledButton(
+                                                onPressed: _isSubmitting
+                                                    ? null
+                                                    : () => Navigator.pop(context, false),
+                                                style: FilledButton.styleFrom(
+                                                    backgroundColor: AppColors.primaryContainer,
+                                                    foregroundColor: AppColors.primary,
+                                                    disabledBackgroundColor: AppColors.primaryContainer,
+                                                    minimumSize: const Size.fromHeight(48),
+                                                    shape: const StadiumBorder(),
+                                                    textStyle: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight: FontWeight.w700,
+                                                    ),
+                                                ),
+                                                child: const Text('취소'),
+                                            ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                            child: FilledButton(
+                                                onPressed: hasScore && !_isSubmitting ? _onConfirm : null,
+                                                style: FilledButton.styleFrom(
+                                                    backgroundColor: AppColors.primary,
+                                                    foregroundColor: Colors.white,
+                                                    disabledBackgroundColor: _isSubmitting ? AppColors.primary : AppColors.primary,
+                                                    disabledForegroundColor: Colors.white,
+                                                    minimumSize: const Size.fromHeight(48),
+                                                    shape: const StadiumBorder(),
+                                                    textStyle: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight: FontWeight.w700,
+                                                    ),
+                                                ),
+                                                child: _isSubmitting
+                                                    ? const SizedBox(
+                                                        width: 20,
+                                                        height: 20,
+                                                        child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color: Colors.white,
+                                                        ),
+                                                    )
+                                                    : const Text('확인'),
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
                     ),
                 ),
             ),
