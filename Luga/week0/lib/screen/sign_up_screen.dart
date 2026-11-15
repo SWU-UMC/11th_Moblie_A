@@ -164,7 +164,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _duplicatedEmails.add(_emailController.text.trim());
           _emailStatus = CheckStatus.duplicated;
         } else if (message.contains('닉네임')) {
-            _duplicatedNicknams.add(_nicknameController.text.trim());
+            _duplicatedNicknames.add(_nicknameController.text.trim());
             _nicknameStatus = CheckStatus.duplicated;
         }
       });
