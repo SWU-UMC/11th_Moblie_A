@@ -1,0 +1,1995 @@
+﻿========== C:\umc_development\movie_log\lib\app\movie_log_app.dart ==========
+import 'package:flutter/material.dart';
+import '../router/app_router.dart';
+import '../themes/app_theme.dart';
+
+class MovieLogApp extends StatelessWidget {
+  const MovieLogApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'MovieLog',
+      theme: AppTheme.light,
+      routerConfig: AppRouter.router,
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\core\config\tmdb_config.dart ==========
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+abstract final class TmdbConfig {
+  static String get accessToken => dotenv.env['TMDB_ACCESS_TOKEN'] ?? '';
+}
+
+========== C:\umc_development\movie_log\lib\core\network\tmdb_client.dart ==========
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import '../config/tmdb_config.dart';
+import 'tmdb_logging_interceptor.dart';
+
+Dio createTmdbClient() {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: 'https://api.themoviedb.org/3',
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      headers: {
+        'Authorization': 'Bearer ${TmdbConfig.accessToken}',
+        'accept': 'application/json',
+      },
+    ),
+  );
+
+  if (kDebugMode) {
+    dio.interceptors.add(TmdbLoggingInterceptor());
+  }
+
+  return dio;
+}
+
+
+========== C:\umc_development\movie_log\lib\core\network\tmdb_logging_interceptor.dart ==========
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+
+class TmdbLoggingInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final maskedHeaders = Map<String, dynamic>.from(options.headers);
+    if (maskedHeaders.containsKey('Authorization')) {
+      maskedHeaders['Authorization'] = 'Bearer ***';
+    }
+    if (kDebugMode) {
+      debugPrint('[TMDB ?붿껌] ${options.method} ${options.uri}');
+      debugPrint('[TMDB ?붿껌 Header] $maskedHeaders');
+      if (options.queryParameters.isNotEmpty) {
+        debugPrint('[TMDB ?붿껌 Query] ${options.queryParameters}');
+      }
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    if (kDebugMode) {
+      debugPrint('[TMDB ?묐떟] ${response.statusCode} ${response.requestOptions.uri}');
+    }
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (kDebugMode) {
+      debugPrint('[TMDB ?ㅻ쪟] ${err.requestOptions.uri}');
+      debugPrint('[TMDB ?ㅻ쪟 ?댁슜] ${err.message}');
+    }
+    handler.next(err);
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\data\models\tmdb_genre_dto.dart ==========
+class TmdbGenreDto {
+  const TmdbGenreDto({required this.id, required this.name});
+  final int id;
+  final String name;
+
+  factory TmdbGenreDto.fromJson(Map<String, dynamic> json) {
+    return TmdbGenreDto(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String? ?? '',
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\data\models\tmdb_movie_dto.dart ==========
+import '../../models/movie.dart';
+
+class TmdbMovieDto {
+  const TmdbMovieDto({
+    required this.id,
+    required this.title,
+    required this.overview,
+    required this.posterPath,
+    required this.backdropPath,
+    required this.releaseDate,
+    required this.genreIds,
+    required this.voteAverage,
+    required this.popularity,
+  });
+
+  final int id;
+  final String title;
+  final String overview;
+  final String? posterPath;
+  final String? backdropPath;
+  final String? releaseDate;
+  final List<int> genreIds;
+  final double voteAverage;
+  final double popularity;
+
+  factory TmdbMovieDto.fromJson(Map<String, dynamic> json) {
+    return TmdbMovieDto(
+      id: (json['id'] as num).toInt(),
+      title: json['title'] as String? ?? '?쒕ぉ ?놁쓬',
+      overview: json['overview'] as String? ?? '',
+      posterPath: json['poster_path'] as String?,
+      backdropPath: json['backdrop_path'] as String?,
+      releaseDate: json['release_date'] as String?,
+      genreIds: (json['genre_ids'] as List<dynamic>? ?? const []).map((e) => (e as num).toInt()).toList(),
+      voteAverage: (json['vote_average'] as num? ?? 0).toDouble(),
+      popularity: (json['popularity'] as num? ?? 0).toDouble(),
+    );
+  }
+}
+
+extension TmdbMovieMapper on TmdbMovieDto {
+  Movie toDomain() {
+    return Movie(
+      id: id,
+      title: title,
+      originalTitle: title,
+      genre: genreIds.isNotEmpty ? genreIds.join(',') : '', // 媛꾨떒 留ㅽ븨 (?ㅼ젣??Genre API ?꾩슂)
+      year: int.tryParse(releaseDate?.split('-').first ?? '') ?? 0,
+      duration: 0, // TMDB 湲곕낯 ?묐떟?먮뒗 runtime ?놁쓬 ???곸꽭 API ?꾩슂
+      rating: voteAverage,
+      synopsis: overview,
+      posterAsset: '', // TMDB ?곗씠?곗뿉?쒕뒗 濡쒖뺄 ?먯뀑 ?ъ슜 ????
+      bannerAsset: backdropPath, // TMDB??backdropPath瑜?諛곕꼫濡??쒖슜 媛??
+      posterPath: posterPath, // ?ш린??TMDB ?ъ뒪??寃쎈줈瑜?Movie.posterPath??留ㅽ븨
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\data\models\tmdb_movie_page_dto.dart ==========
+import 'tmdb_movie_dto.dart';
+
+class TmdbMoviePageDto {
+  const TmdbMoviePageDto({
+    required this.page,
+    required this.results,
+    required this.totalPages,
+    required this.totalResults,
+  });
+
+  final int page;
+  final List<TmdbMovieDto> results;
+  final int totalPages;
+  final int totalResults;
+
+  factory TmdbMoviePageDto.fromJson(Map<String, dynamic> json) {
+    final rawResults = json['results'] as List<dynamic>? ?? const [];
+    return TmdbMoviePageDto(
+      page: (json['page'] as num).toInt(),
+      results: rawResults.map((e) => TmdbMovieDto.fromJson(e as Map<String, dynamic>)).toList(),
+      totalPages: (json['total_pages'] as num? ?? 1).toInt(),
+      totalResults: (json['total_results'] as num? ?? 0).toInt(),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\data\services\fake_movie_service.dart ==========
+import '../../models/movie.dart';
+
+enum MovieLoadMode { success, empty, failure }
+
+class MovieLoadException implements Exception {
+  const MovieLoadException(this.message);
+  final String message;
+}
+
+class FakeMovieService {
+  const FakeMovieService();
+
+  Future<List<Movie>> fetchMovies({
+    MovieLoadMode mode = MovieLoadMode.success,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    return switch (mode) {
+      MovieLoadMode.success => mockMovies,
+      MovieLoadMode.empty => const <Movie>[],
+      MovieLoadMode.failure =>
+        throw const MovieLoadException('?곹솕瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲?? ?ㅽ듃?뚰겕 ?곌껐???뺤씤?댁＜?몄슂.'),
+    };
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\data\services\tmdb_movie_service.dart ==========
+import 'package:dio/dio.dart';
+import '../models/tmdb_movie_page_dto.dart';
+import '../models/tmdb_genre_dto.dart';
+
+class TmdbMovieService {
+  TmdbMovieService(this._dio);
+  final Dio _dio;
+
+  Future<TmdbMoviePageDto> fetchPopular({int page = 1}) async {
+    final response = await _dio.get('/movie/popular', queryParameters: {'language': 'ko-KR', 'page': page});
+    return TmdbMoviePageDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<TmdbMoviePageDto> discoverMovies({required int page, int? genreId}) async {
+    final response = await _dio.get('/discover/movie', queryParameters: {
+      'language': 'ko-KR',
+      'page': page,
+      'sort_by': 'popularity.desc',
+      'include_adult': false,
+      'include_video': false,
+      if (genreId != null) 'with_genres': genreId,
+    });
+    return TmdbMoviePageDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<TmdbGenreDto>> fetchGenres() async {
+    final response = await _dio.get('/genre/movie/list', queryParameters: {'language': 'ko'});
+    final data = response.data as Map<String, dynamic>;
+    final genres = data['genres'] as List<dynamic>? ?? const [];
+    return genres.map((e) => TmdbGenreDto.fromJson(e as Map<String, dynamic>)).toList();
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\main.dart ==========
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'app/movie_log_app.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  runApp(const MovieLogApp());
+}
+
+========== C:\umc_development\movie_log\lib\models\movie.dart ==========
+class Movie {
+  final int id;
+  final String title;
+  final String originalTitle;
+  final String genre;
+  final int year;
+  final int duration;
+  final double rating;
+  final String synopsis;
+  final String posterAsset; // ?몃줈 ?ъ뒪??(紐⑸줉??
+  final String? bannerAsset; // 媛濡?諛곕꼫 (?곸꽭?붾㈃ 諛???移대뱶??
+  final String? posterPath; // 異붽?
+
+  const Movie({
+    required this.id,
+    required this.title,
+    required this.originalTitle,
+    required this.genre,
+    required this.year,
+    required this.duration,
+    required this.rating,
+    required this.synopsis,
+    required this.posterAsset,
+    this.bannerAsset,
+    this.posterPath,
+  });
+}
+
+const List<Movie> mockMovies = [
+  Movie(
+    id: 1,
+    title: '蹂꾨튆 ?꾨옒 ?곕━',
+    originalTitle: 'US UNDER THE STARLIGHT',
+    genre: '濡쒕㎤???쒕씪留?,
+    year: 2023,
+    duration: 120,
+    rating: 4.5,
+    synopsis: '諛붿걶 ?꾨? ?ы쉶 ?띿뿉???쒕줈??議댁옱瑜??딄퀬 ?댁븘媛?????⑤?媛 ?곗뿰??怨꾧린濡??묒? 泥쒕Ц??먯꽌 留뚮굹寃??⑸땲?? 留ㅼ씪 諛?蹂꾩쓣 愿痢≫븯硫?怨쇨굅???곸쿂瑜?移섏쑀?섍퀬, 蹂꾩옄由ъ쿂??蹂?⑥뾾???쒕줈??紐⑥뒿???듯빐 ?ロ??덈뜕 留덉쓬??臾몄쓣 ?쒖꽌???댁뼱媛???곕쑜??濡쒕㎤???댁빞湲곗엯?덈떎.',
+    posterAsset: 'assets/images/poster_starlight.jpg',
+    bannerAsset: 'assets/images/hero_starlight.jpg',
+  ),
+  Movie(
+    id: 2,
+    title: '?곗＜???앹뿉??,
+    originalTitle: 'ECHOS OF THE VOID',
+    genre: 'SF',
+    year: 2024,
+    duration: 130,
+    rating: 4.2,
+    synopsis: '?몃쪟??留덉?留??щ쭩???덇퀬 誘몄????곗＜ 怨듦컙?쇰줈 ?좊궃 ?먰뿕??먮뱾??寃る뒗 寃쎌씠濡?퀬???섎궃???ъ젙??洹몃┰?덈떎. ?덉긽移?紐삵븳 ?꾪삊 ?띿뿉????먮뱾? ?앹〈???꾪븳 ?ы닾瑜?踰뚯씠硫? ?곗＜ 源딆? 怨녹뿉 ?쏀엺 嫄곕???鍮꾨?怨?留덉＜?섍쾶 ?섎뒗 SF ??묒엯?덈떎.',
+    posterAsset: 'assets/images/poster_void.jpg',
+  ),
+  Movie(
+    id: 3,
+    title: '湲곗뼲????,
+    originalTitle: 'WHISPERING WOODS',
+    genre: '?좊땲硫붿씠??,
+    year: 2022,
+    duration: 110,
+    rating: 4.9,
+    synopsis: '?곗뿰???좊퉬濡쒖슫 ?뺣졊?ㅼ씠 ?닿퀬 ?덈뒗 湲곗뼲???뀁뿉 諛쒖쓣 ?ㅼ씤 二쇱씤怨듭씠 ?껋뼱踰꾨┛ ?먯떊??怨쇨굅? 留덉＜?섎뒗 紐⑦뿕???댁븯?듬땲?? ?좊퉬濡쒖슫 留덈쾿怨??곕쑜???곗젙???댁슦?ъ쭊 ?뀁냽 ?ъ젙???듯빐 吏꾩젙???먯븘瑜?李얠븘媛??媛먮룞?곸씤 ?좊땲硫붿씠?섏엯?덈떎.',
+    posterAsset: 'assets/images/poster_woods.jpg',
+  ),
+  Movie(
+    id: 4,
+    title: '諛ㅼ쓽 洹몃┝??,
+    originalTitle: 'NIGHT SHADOWS',
+    genre: '?ㅻ┫??,
+    year: 2024,
+    duration: 145,
+    rating: 3.8,
+    synopsis: '?붾젮???ㅼ삩?ъ씤 ?ㅼ뿉 ?④꺼吏??꾩떆???대몺 ?띿뿉???곗뇙?곸쑝濡?踰뚯뼱吏??誘몄뒪?곕━???ш굔?ㅼ쓣 ?뚰뿤移섎뒗 ?뺤궗???댁빞湲곗엯?덈떎. ?⑥꽌媛 ?щ씪吏?誘멸턿???ш굔??已볦쑝硫??앹뾾??異붽꺽?꾩씠 ?댁뼱吏怨? ?곸긽議곗감 ?섏? 紐삵븳 異⑷꺽?곸씤 吏꾩떎怨?留덉＜?섍쾶 ?섎뒗 ??留됲엳???ㅻ┫?ъ엯?덈떎.',
+    posterAsset: 'assets/images/poster_shadows.jpg',
+  ),
+];
+
+Movie? findMovieById(int? id) {
+  for (final movie in mockMovies) {
+    if (movie.id == id) return movie;
+  }
+  return null;
+}
+
+
+========== C:\umc_development\movie_log\lib\practice.dart ==========
+// Movie Class ?묒꽦
+class Movie {
+  const Movie({required this.id, required this.title});
+  final int id;
+  final String title;
+}
+
+void main() {
+  // ?곹솕 3媛쒕? List<Movie>???ｊ린
+  final movies = <Movie>[
+    const Movie(id: 1, title: '??댄???),
+    const Movie(id: 2, title: '?명꽣?ㅽ뀛??),
+    const Movie(id: 3, title: '?ㅻ뵒?몄씠'),
+  ];
+
+  // for ?먮뒗 map???ъ슜???곹솕 ?쒕ぉ 異쒕젰
+  print('--- ?곹솕 紐⑸줉 ---');
+  for (final movie in movies) {
+    print(movie.title);
+  }
+
+  // nullable ?됰꽕?꾩쓣 ?덉쟾??湲곕낯媛믪쑝濡?蹂??
+  print('\n--- ?됰꽕??泥섎━ ---');
+  String? nickname; // ?꾩옱 媛믪쓣 吏?뺥븯吏 ?딆븘 null ?곹깭
+  String safeNickname = nickname ?? '寃뚯뒪??; 
+  print('?섏쁺?⑸땲?? $safeNickname??');
+}
+
+========== C:\umc_development\movie_log\lib\repositories\genre_preference.dart ==========
+import 'package:shared_preferences/shared_preferences.dart';
+
+class GenrePreference {
+  GenrePreference({SharedPreferences? preferences})
+      : _preferencesFuture = preferences != null ? Future.value(preferences) : SharedPreferences.getInstance();
+
+  static const _selectedGenreKey = 'selected_genre';
+  final Future<SharedPreferences> _preferencesFuture;
+
+  Future<String> read() async {
+    final prefs = await _preferencesFuture;
+    return prefs.getString(_selectedGenreKey) ?? '?꾩껜';
+  }
+
+  Future<void> save(String genre) async {
+    final prefs = await _preferencesFuture;
+    await prefs.setString(_selectedGenreKey, genre);
+  }
+
+  Future<void> clear() async {
+    final prefs = await _preferencesFuture;
+    await prefs.remove(_selectedGenreKey);
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\router\app_router.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../screens/start_screen.dart';
+import '../screens/register_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/main_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/movie_list_screen.dart';
+import '../screens/movie_detail_screen.dart';
+
+class AppRouter {
+  AppRouter._();
+
+  static final router = GoRouter(
+    initialLocation: '/start',
+    routes: [
+      GoRoute(
+        path: '/start',
+        builder: (context, state) => const StartScreen(),
+      ),
+
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+
+      GoRoute(
+        path: '/movies/:movieId',
+        builder: (context, state) {
+          final movieId =
+              int.tryParse(state.pathParameters['movieId'] ?? '');
+
+          return MovieDetailScreen(
+            movieId: movieId,
+          );
+        },
+      ),
+
+      ShellRoute(
+        builder: (context, state, child) {
+          return TabScreen(
+            currentIndex: _indexFromLocation(
+              state.uri.path,
+            ),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) =>
+                const HomeScreen(),
+          ),
+
+          GoRoute(
+            path: '/movies',
+            builder: (context, state) =>
+                const MovieListScreen(),
+          ),
+
+          GoRoute(
+            path: '/my',
+            builder: (context, state) =>
+                const ProfileScreen(),
+          ),
+        ],
+      ),
+    ],
+  );
+
+  static int _indexFromLocation(String path) {
+    if (path.startsWith('/movies')) return 1;
+    if (path.startsWith('/my')) return 2;
+    return 0;
+  }
+}
+
+========== C:\umc_development\movie_log\lib\screens\home_screen.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../models/movie.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+import '../widgets/tmdb_poster_image.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final featuredMovie = mockMovies[0];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'MovieLog',
+          style: TextStyle(
+            color: AppColors.violet,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: AppColors.violet),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('?ㅻ뒛? ?대뼡\n?곹솕瑜?蹂쇨퉴??', style: AppTextStyles.titleLarge),
+            const SizedBox(height: 24),
+            GestureDetector(
+              onTap: () => context.push('/movies/${featuredMovie.id}'),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  children: [
+                    // TMDB ?ъ뒪???대?吏
+                    TmdbPosterImage(
+                      posterPath: featuredMovie.posterPath,
+                      width: double.infinity,
+                      height: 480,
+                      fit: BoxFit.cover,
+                    ),
+                    // 洹몃씪?곗씠???ㅻ쾭?덉씠
+                    Container(
+                      width: double.infinity,
+                      height: 480,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.8),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.violet,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Text(
+                              '異붿쿇 ?좎옉',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            featuredMovie.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${featuredMovie.genre} 쨌 ${featuredMovie.duration}遺?,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () =>
+                                  context.push('/movies/${featuredMovie.id}'),
+                              icon: const Icon(
+                                Icons.info_outline,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                '?곸꽭蹂닿린',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.violet,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('?멸린 ?곹솕', style: AppTextStyles.titleMediumB),
+                TextButton(
+                  onPressed: () => context.go('/movies'),
+                  child: const Text(
+                    '?꾩껜蹂닿린 >',
+                    style: TextStyle(color: AppColors.violet),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\screens\main_screen.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../themes/app_colors.dart';
+
+class TabScreen extends StatelessWidget {
+  final int currentIndex;
+  final Widget child;
+
+  const TabScreen({super.key, required this.currentIndex, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentIndex,
+        indicatorColor: AppColors.violet.withOpacity(0.2),
+        onDestinationSelected: (index) {
+          if (index == 0) context.go('/home');
+          else if (index == 1) context.go('/movies');
+          else if (index == 2) context.go('/my');
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: '??),
+          NavigationDestination(icon: Icon(Icons.movie_outlined), selectedIcon: Icon(Icons.movie), label: '?곹솕'),
+          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: '留덉씠'),
+        ],
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\screens\movie_detail_screen.dart ==========
+import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../models/movie.dart';
+import '../themes/app_colors.dart';
+import '../widgets/rating_dialog.dart';
+
+class MovieDetailScreen extends StatefulWidget {
+  final int? movieId;
+  const MovieDetailScreen({super.key, required this.movieId});
+
+  @override
+  State<MovieDetailScreen> createState() => _MovieDetailScreenState();
+}
+
+class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  bool isFavorite = false;
+  double userRating = 0.0;
+
+  void _toggleFavorite() {
+    setState(() => isFavorite = !isFavorite);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isFavorite ? '利먭꺼李얘린??異붽??섏뿀?듬땲??' : '利먭꺼李얘린?먯꽌 ?쒓굅?섏뿀?듬땲??'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _showRatingDialog() async {
+    final result = await showDialog<double>(
+      context: context,
+      builder: (_) => RatingDialog(initialRating: userRating),
+    );
+    if (result != null) setState(() => userRating = result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final movie = findMovieById(widget.movieId);
+    if (movie == null) {
+      return const Scaffold(
+        body: Center(child: Text('?곹솕瑜?李얠쓣 ???놁뒿?덈떎.')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Cinema Archive',
+          style: TextStyle(color: AppColors.violet, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        actions: [IconButton(icon: const Icon(Icons.share), onPressed: () {})],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _toggleFavorite,
+                  icon: Icon(
+                    isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                    color: AppColors.violet,
+                  ),
+                  label: const Text('利먭꺼李얘린', style: TextStyle(color: AppColors.violet)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.violet),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showRatingDialog,
+                  icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
+                  label: Text(
+                    userRating > 0 ? '???됱젏: $userRating' : '?됱젏 ?④린湲?,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.violet,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 諛곕꼫 ?대?吏
+            Container(
+              width: double.infinity,
+              height: 480,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(movie.bannerAsset ?? movie.posterAsset),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                ),
+              ),
+            ),
+            // ?곸꽭 ?뺣낫
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(movie.title,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${movie.year} 쨌 ${movie.genre} 쨌 ${movie.duration}遺?,
+                    style: const TextStyle(color: AppColors.gray),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      RatingBarIndicator(
+                        rating: movie.rating,
+                        itemBuilder: (context, index) =>
+                            const Icon(Icons.star, color: AppColors.violet),
+                        itemCount: 5,
+                        itemSize: 20.0,
+                      ),
+                      const SizedBox(width: 8),
+                      Text('${movie.rating}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text('?쒕냹?쒖뒪',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text(movie.synopsis, style: const TextStyle(height: 1.6)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\screens\movie_list_screen.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/movie.dart';
+import '../themes/app_colors.dart';
+
+import '../data/services/fake_movie_service.dart';
+import '../repositories/genre_preference.dart';
+import '../widgets/movie_list_loading.dart';
+import '../widgets/movie_list_empty.dart';
+import '../widgets/movie_list_error.dart';
+import '../widgets/movie_card.dart';
+
+class MovieListScreen extends StatefulWidget {
+  const MovieListScreen({super.key});
+
+  @override
+  State<MovieListScreen> createState() => _MovieListScreenState();
+}
+
+class _MovieListScreenState extends State<MovieListScreen> {
+  final FakeMovieService _movieService = const FakeMovieService();
+  final GenrePreference _genrePreference = GenrePreference();
+
+  late Future<List<Movie>> _moviesFuture = Future.value([]);
+
+  String _selectedGenre = '?꾩껜';
+  final List<String> genres = ['?꾩껜', '?쒕씪留?, 'SF', '?좊땲硫붿씠??, '?ㅻ┫??];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final savedGenre = await _genrePreference.read();
+    if (!mounted) return;
+
+    setState(() {
+      _selectedGenre = genres.contains(savedGenre) ? savedGenre : '?꾩껜';
+      _moviesFuture = _movieService.fetchMovies(mode: MovieLoadMode.success);
+    });
+  }
+
+  void _retry() {
+    setState(() {
+      _moviesFuture = _movieService.fetchMovies(mode: MovieLoadMode.success);
+    });
+  }
+
+  Future<void> _onGenreSelected(String genre) async {
+    setState(() {
+      _selectedGenre = genre;
+      _moviesFuture = _movieService.fetchMovies(mode: MovieLoadMode.success);
+    });
+    await _genrePreference.save(genre);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('?곹솕', style: TextStyle(color: AppColors.violet, fontWeight: FontWeight.bold)),
+        centerTitle: false,
+        actions: [IconButton(icon: const Icon(Icons.search, color: AppColors.violet), onPressed: () {})],
+      ),
+      body: Column(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: genres.map((genre) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(genre),
+                  selected: _selectedGenre == genre,
+                  showCheckmark: false,
+                  backgroundColor: AppColors.violet.withOpacity(0.1),
+                  selectedColor: AppColors.violet,
+                  side: BorderSide.none,
+                  shape: const StadiumBorder(),
+                  labelStyle: TextStyle(color: _selectedGenre == genre ? Colors.white : AppColors.gray),
+                  onSelected: (selected) {
+                    if (selected) _onGenreSelected(genre);
+                  },
+                ),
+              )).toList(),
+            ),
+          ),
+         Expanded(
+            child: FutureBuilder<List<Movie>>(
+              future: _moviesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const MovieListLoading();
+                }
+                if (snapshot.hasError) {
+                  return MovieListError(onRetry: _retry);
+                }
+                final allMovies = snapshot.data ?? const <Movie>[];
+                final filteredMovies = _selectedGenre == '?꾩껜'
+                    ? allMovies
+                    : allMovies.where((m) => m.genre.contains(_selectedGenre)).toList();
+                if (filteredMovies.isEmpty) {
+                  return const MovieListEmpty();
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 24, childAspectRatio: 0.65,
+                  ),
+                  itemCount: filteredMovies.length,
+                  itemBuilder: (context, index) {
+                    return MovieCard(movie: filteredMovies[index]);
+                  },
+                );
+              },
+            ),
+         )
+        ],
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\screens\profile_screen.dart ==========
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+import '../widgets/common_app_bar.dart';
+import '../widgets/stat_item.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = [
+      {'label': '蹂??곹솕', 'value': '342'},
+      {'label': '?됱젏', 'value': '4.2'},
+      {'label': '利먭꺼李얘린', 'value': '58'},
+    ];
+    final genres = ['?쒕씪留?, 'SF', '?좊땲硫붿씠??];
+
+    return Scaffold(
+      appBar: const CommonAppBar(
+        title: '???꾨줈??,
+        centerTitle: false,
+      ),
+      body: SafeArea(
+        minimum: const EdgeInsets.symmetric(horizontal: 16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              Center(
+                child: const CircleAvatar(
+                  radius: 52,
+                  backgroundColor: AppColors.gray,
+                  backgroundImage: AssetImage('assets/images/profile_movielog.jpg'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: Column(
+                  children: [
+                    const Text('臾대퉬?щ쾭', style: AppTextStyles.titleLarge),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '留ㅼ＜ 二쇰쭚???곹솕愿?쇰줈 異쒓렐?섎뒗 ?꾨줈 愿?뚭컼. 醫뗭?\n?곹솕瑜?蹂닿퀬 湲곕줉?섎뒗 寃껋쓣 醫뗭븘?⑸땲??',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: AppColors.violet,
+                    backgroundColor: AppColors.warmWhite,
+                    elevation: 0,
+                    side: const BorderSide(color: AppColors.violet),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '?꾨줈???섏젙',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: stats.map((stat) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: StatItem(
+                        label: stat['label']!,
+                        value: stat['value']!,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+              const Text('?좏샇?섎뒗 ?λⅤ', style: AppTextStyles.titleMediumB),
+              const SizedBox(height: 12),
+              Row(
+                children: genres.map((genre) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Chip(
+                      label: Text(
+                        genre,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.violet,
+                        ),
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\screens\register_screen.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+import '../widgets/common_app_bar.dart';
+import '../widgets/register_input.dart';
+import '../widgets/terms_agreement.dart';
+import '../widgets/register_submit_button.dart';
+
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nicknameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+
+  bool _agreedToTerms = false;
+
+  @override
+  void dispose() {
+    _nicknameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    super.dispose();
+  }
+
+  bool get _canSubmit =>
+      _nicknameController.text.trim().length >= 2 &&
+      _emailController.text.contains('@') &&
+      _passwordController.text.length >= 8 &&
+      _agreedToTerms;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const CommonAppBar(title: '?뚯썝媛??, centerTitle: true),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  '?섏쁺?⑸땲??\n媛꾨떒???뺣낫留??낅젰?섍퀬 ?쒖옉?대낫?몄슂.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium,
+                ),
+                const SizedBox(height: 32),
+                SignupInputSection(
+                  nicknameController: _nicknameController,
+                  emailController: _emailController,
+                  passwordController: _passwordController,
+                  emailFocusNode: _emailFocusNode,
+                  passwordFocusNode: _passwordFocusNode,
+                  onChanged: () => setState(() {}),
+                ),
+                const SizedBox(height: 120),
+                TermsAgreementSection(
+                  isAgreed: _agreedToTerms,
+                  onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+                ),
+                const SizedBox(height: 16),
+                SignupSubmitButton(
+                  canSubmit: _canSubmit,
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      FocusScope.of(context).unfocus();
+                      context.go('/home');
+                    }
+                  },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('?대? 怨꾩젙???덈굹?? ', style: AppTextStyles.bodyMedium),
+                    Text(
+                      '濡쒓렇??,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.violet,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\screens\start_screen.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class StartScreen extends StatelessWidget {
+  const StartScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                children: [
+                  const SizedBox(height: 32),
+                  SvgPicture.asset(
+                    'assets/logos/movielog_logo.svg',
+                    width: 72,
+                    height: 72,
+                    semanticsLabel: 'MovieLog 濡쒓퀬',
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    '?곹솕???쒓컙??n湲곕줉?섏꽭??,
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '蹂닿퀬 ?띠? ?곹솕遺???섎쭔???됱젏源뚯?\n?쒓납?먯꽌 愿由ы빐??,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.go('/register');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                  ),
+                  child: const Text('?쒖옉?섍린'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\themes\app_colors.dart ==========
+import 'package:flutter/material.dart';
+
+abstract final class AppColors {
+  static const violet = Color(0xFF6750A4);
+  static const warmWhite = Color(0xFFFAF9F5);
+  static const white = Color(0xFFFFFFFF);
+  static const black = Color(0xFF1C1B1F);
+  static const gray = Color(0xFF79747E);
+}
+
+========== C:\umc_development\movie_log\lib\themes\app_text_styles.dart ==========
+import 'package:flutter/material.dart';
+import 'app_colors.dart';
+
+abstract final class AppTextStyles {
+  static const titleLarge = TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.black);
+  static const titleMediumB = TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.black);
+  static const titleMediumW = TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.white);
+  static const bodyMedium = TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.black, height: 1.5);
+  static const bodySmall = TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.gray);
+}
+
+========== C:\umc_development\movie_log\lib\themes\app_theme.dart ==========
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'app_colors.dart';
+
+abstract final class AppTheme {
+  static final ThemeData light = ThemeData(
+    useMaterial3: true,
+    fontFamily: 'Manrope',
+    scaffoldBackgroundColor: AppColors.warmWhite,
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.violet,
+      surface: AppColors.warmWhite,
+      onPrimary: AppColors.white,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: AppColors.warmWhite,
+      foregroundColor: AppColors.black,
+      centerTitle: true,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.warmWhite,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    ),
+  );
+}
+
+========== C:\umc_development\movie_log\lib\view_models\movie_home_view_model.dart ==========
+import 'package:flutter/material.dart';
+import '../data/models/tmdb_movie_dto.dart';
+import '../data/services/tmdb_movie_service.dart';
+
+class MovieHomeViewModel extends ChangeNotifier {
+  MovieHomeViewModel(this._service);
+  final TmdbMovieService _service;
+
+  bool isLoading = false;
+  String? error;
+  List<TmdbMovieDto> popular = [];
+
+  Future<void> loadPopular() async {
+    isLoading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final page = await _service.fetchPopular(page: 1);
+      popular = page.results.take(5).toList();
+    } catch (e) {
+      error = '?멸린 ?곹솕瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\view_models\movie_list_view_model.dart ==========
+import 'package:flutter/material.dart';
+import '../data/models/tmdb_movie_dto.dart';
+import '../data/models/tmdb_genre_dto.dart';
+import '../data/services/tmdb_movie_service.dart';
+
+class MovieListViewModel extends ChangeNotifier {
+  MovieListViewModel(this._service);
+  final TmdbMovieService _service;
+
+  bool isLoading = false;
+  String? error;
+  List<TmdbMovieDto> movies = [];
+  List<TmdbGenreDto> genres = [];
+  int? selectedGenreId;
+
+  Future<void> loadInitial() async {
+    isLoading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      genres = await _service.fetchGenres();
+      await loadMovies(genreId: null);
+    } catch (e) {
+      error = '?곹솕 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMovies({int? genreId}) async {
+    isLoading = true;
+    error = null;
+    movies = [];
+    notifyListeners();
+
+    try {
+      final byId = <int, TmdbMovieDto>{};
+      var pageNumber = 1;
+      var hasNext = true;
+
+      while (byId.length < 30 && hasNext) {
+        final page = await _service.discoverMovies(page: pageNumber, genreId: genreId);
+        for (final m in page.results) {
+          byId[m.id] = m;
+          if (byId.length == 30) break;
+        }
+        hasNext = pageNumber < page.totalPages && page.results.isNotEmpty;
+        pageNumber++;
+      }
+
+      movies = byId.values.toList();
+    } catch (e) {
+      error = '?곹솕 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> changeGenre(int? genreId) async {
+    selectedGenreId = genreId;
+    await loadMovies(genreId: genreId);
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\common_app_bar.dart ==========
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+
+class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const CommonAppBar({
+    super.key,
+    required this.title,
+    this.onBack,
+    this.actions,
+    this.centerTitle = false,
+    this.titleStyle,
+  });
+
+  final String title;
+  final VoidCallback? onBack;
+  final List<Widget>? actions;
+  final bool centerTitle;
+  final TextStyle? titleStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text(
+        title,
+        style: titleStyle ?? AppTextStyles.titleLarge.copyWith(color: AppColors.violet),
+      ),
+      centerTitle: centerTitle,
+      leading: onBack == null ? null : IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack),
+      actions: actions,
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+========== C:\umc_development\movie_log\lib\widgets\movie_card.dart ==========
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/movie.dart';
+import '../themes/app_colors.dart';
+import '../widgets/tmdb_poster_image.dart';
+
+class MovieCard extends StatelessWidget {
+  const MovieCard({super.key, required this.movie});
+
+  final Movie movie;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/movies/${movie.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  //child: Image.asset(movie.posterAsset, fit: BoxFit.cover),
+                  child: TmdbPosterImage(
+                    posterPath: movie.posterPath, // TMDB ?ъ뒪??寃쎈줈 諛섏쁺
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 14),
+                        const SizedBox(width: 4),
+                        Text('${movie.rating}',
+                            style: const TextStyle(color: Colors.white, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            movie.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${movie.year} 쨌 ${movie.genre}',
+            style: const TextStyle(color: AppColors.gray, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\movie_list_empty.dart ==========
+import 'package:flutter/material.dart';
+
+class MovieListEmpty extends StatelessWidget {
+  const MovieListEmpty({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        '議곌굔??留욌뒗 ?곹솕媛 ?놁뒿?덈떎.',
+        style: TextStyle(fontSize: 16, color: Colors.grey),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\movie_list_error.dart ==========
+import 'package:flutter/material.dart';
+
+class MovieListError extends StatelessWidget {
+  const MovieListError({
+    super.key,
+    required this.onRetry,
+  });
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+          const SizedBox(height: 12),
+          const Text(
+            '?곹솕瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: onRetry,
+            child: const Text('?ㅼ떆 ?쒕룄'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\movie_list_loading.dart ==========
+import 'package:flutter/material.dart';
+
+class MovieListLoading extends StatelessWidget {
+  const MovieListLoading({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\movie_rating_input.dart ==========
+import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../themes/app_colors.dart';
+
+class RatingInput extends StatelessWidget {
+  const RatingInput({
+    super.key,
+    required this.initialRating,
+    required this.onChanged,
+  });
+
+  final double initialRating;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return RatingBar.builder(
+      initialRating: initialRating,
+      minRating: 0.5,
+      allowHalfRating: true,
+      itemCount: 5,
+      itemBuilder: (context, _) => const Icon(Icons.star, color: AppColors.violet),
+      onRatingUpdate: onChanged,
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\rating_dialog.dart ==========
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import 'movie_rating_input.dart';
+
+class RatingDialog extends StatefulWidget {
+  const RatingDialog({super.key, required this.initialRating});
+
+  final double initialRating;
+
+  @override
+  State<RatingDialog> createState() => _RatingDialogState();
+}
+
+class _RatingDialogState extends State<RatingDialog> {
+  late double tempRating;
+
+  @override
+  void initState() {
+    super.initState();
+    tempRating = widget.initialRating;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('?곹솕???대뼚?⑤굹??', style: TextStyle(fontWeight: FontWeight.bold)),
+      content: RatingInput(
+        initialRating: tempRating,
+        onChanged: (rating) => setState(() => tempRating = rating),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('痍⑥냼', style: TextStyle(color: AppColors.gray)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.violet,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context, tempRating),
+          child: const Text('?뺤씤'),
+        ),
+      ],
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\register_input.dart ==========
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+
+class SignupInputSection extends StatelessWidget {
+  const SignupInputSection({
+    super.key,
+    required this.nicknameController,
+    required this.emailController,
+    required this.passwordController,
+    required this.emailFocusNode,
+    required this.passwordFocusNode,
+    required this.onChanged,
+  });
+
+  final TextEditingController nicknameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final FocusNode emailFocusNode;
+  final FocusNode passwordFocusNode;
+  final VoidCallback onChanged;
+
+  Widget _buildInput({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
+    FocusNode? focusNode,
+    bool obscureText = false,
+    TextInputAction? textInputAction,
+    VoidCallback? onSubmitted,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTextStyles.titleMediumB),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          obscureText: obscureText,
+          textInputAction: textInputAction,
+          onChanged: (_) => onChanged(),
+          onFieldSubmitted: (_) => onSubmitted?.call(),
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.gray),
+            filled: true,
+            fillColor: (controller.text.isNotEmpty && validator(controller.text) != null)
+                ? Colors.red.shade50
+                : AppColors.gray.withOpacity(0.1),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            helperText: ' ',
+            helperStyle: const TextStyle(height: 0),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.gray),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.gray),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const SizedBox(height: 24);
+    return Column(
+      children: [
+        _buildInput(
+          label: '?됰꽕??,
+          hint: '?됰꽕?꾩쓣 ?낅젰?댁＜?몄슂',
+          controller: nicknameController,
+          textInputAction: TextInputAction.next,
+          onSubmitted: () => emailFocusNode.requestFocus(),
+          validator: (v) {
+            final text = v?.trim() ?? '';
+            if (text.isEmpty) return '?됰꽕?꾩쓣 ?낅젰?댁＜?몄슂.';
+            if (text.length < 2) return '?됰꽕?꾩? 2???댁긽?댁뼱???⑸땲??';
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+        _buildInput(
+          label: '?대찓??,
+          hint: '?대찓??二쇱냼瑜??낅젰?댁＜?몄슂',
+          controller: emailController,
+          focusNode: emailFocusNode,
+          textInputAction: TextInputAction.next,
+          onSubmitted: () => passwordFocusNode.requestFocus(),
+          validator: (v) {
+            final text = v?.trim() ?? '';
+            if (text.isEmpty) return '?대찓?쇱쓣 ?낅젰?댁＜?몄슂.';
+            if (!text.contains('@')) return '?щ컮瑜??대찓???뺤떇???꾨떃?덈떎.';
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+        _buildInput(
+          label: '鍮꾨?踰덊샇',
+          hint: '鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂',
+          controller: passwordController,
+          focusNode: passwordFocusNode,
+          obscureText: true,
+          textInputAction: TextInputAction.done,
+          validator: (v) {
+            final text = v ?? '';
+            if (text.isEmpty) return '鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂.';
+            if (text.length < 8) return '鍮꾨?踰덊샇??8???댁긽?댁뼱???⑸땲??';
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\register_submit_button.dart ==========
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+
+class SignupSubmitButton extends StatelessWidget {
+  const SignupSubmitButton({
+    super.key,
+    required this.canSubmit,
+    required this.onPressed,
+  });
+
+  final bool canSubmit;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: canSubmit ? onPressed : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.violet,
+          foregroundColor: AppColors.white,
+          disabledBackgroundColor: AppColors.violet.withOpacity(0.3),
+          disabledForegroundColor: AppColors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: const Text('媛?낇븯湲?, style: AppTextStyles.titleMediumW),
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\stat_item.dart ==========
+import 'package:flutter/material.dart';
+
+class StatItem extends StatelessWidget {
+  const StatItem({
+    super.key,
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.primary.withOpacity(0.04),
+        border: Border.all(color: colors.primary.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: textTheme.bodySmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: textTheme.titleLarge?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\terms_agreement.dart ==========
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+
+class TermsAgreementSection extends StatelessWidget {
+  const TermsAgreementSection({
+    super.key,
+    required this.isAgreed,
+    required this.onChanged,
+  });
+
+  final bool isAgreed;
+  final ValueChanged<bool?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Checkbox(
+          value: isAgreed,
+          onChanged: onChanged,
+          activeColor: AppColors.violet,
+        ),
+        const Expanded(
+          child: Text(
+            '?꾩닔 ?쎄????숈쓽?⑸땲??',
+            style: AppTextStyles.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+
+========== C:\umc_development\movie_log\lib\widgets\tmdb_poster_image.dart ==========
+import 'package:flutter/material.dart';
+
+class TmdbPosterImage extends StatelessWidget {
+  const TmdbPosterImage({
+    super.key,
+    required this.posterPath,
+    required this.width,
+    required this.height,
+    this.fit = BoxFit.cover,
+  });
+
+  final String? posterPath;
+  final double width;
+  final double height;
+  final BoxFit fit;
+
+  static const _baseUrl = 'https://image.tmdb.org/t/p';
+  static const _size = 'w500';
+
+  String? get _imageUrl {
+    if (posterPath == null || posterPath!.isEmpty) return null;
+    return '$_baseUrl/$_size$posterPath';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = _imageUrl;
+    if (imageUrl == null) return _placeholder(context);
+
+    return Image.network(
+      imageUrl,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (_, __, ___) => _placeholder(context),
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          width: width,
+          height: height,
+          color: Colors.grey.shade200,
+          alignment: Alignment.center,
+          child: const CircularProgressIndicator(strokeWidth: 2),
+        );
+      },
+    );
+  }
+
+  Widget _placeholder(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Icon(Icons.image_not_supported_outlined),
+    );
+  }
+}
+
+

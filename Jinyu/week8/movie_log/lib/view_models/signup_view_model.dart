@@ -1,0 +1,189 @@
+import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
+import '../data/services/sign_up_service.dart';
+import '../data/models/create_member_request.dart';
+import '../data/models/common_response.dart';
+
+enum CheckStatus { idle, checking, available, duplicated, error }
+enum SubmitStatus { idle, submitting, success, error }
+
+class SignUpViewModel extends ChangeNotifier {
+  SignUpViewModel(this._service);
+  final SignUpService _service;
+
+  // 닉네임 & 이메일 중복 확인 관련 상태
+  CheckStatus nicknameCheckStatus = CheckStatus.idle;
+  String? nicknameErrorText;
+  String? _duplicatedNickname;
+  String _currentNickname = '';
+  int _requestVersion = 0;
+  bool _disposed = false;
+
+  CheckStatus emailCheckStatus = CheckStatus.idle;
+  String? emailErrorText;
+  String? _duplicatedEmail;
+  String _currentEmail = '';
+
+  // 회원가입 제출 관련 상태 (7주차 추가)
+  SubmitStatus submitStatus = SubmitStatus.idle;
+  int? createdMemberId; // 가입 성공 응답에서 읽은 실제 ID
+  String? passwordErrorText;
+  String? snackbarMessage;
+
+  bool get canCheckEmail =>
+      emailCheckStatus != CheckStatus.checking &&
+      emailCheckStatus != CheckStatus.duplicated;
+
+  bool get canCheckNickname =>
+      nicknameCheckStatus != CheckStatus.checking &&
+      nicknameCheckStatus != CheckStatus.duplicated;
+
+  void onNicknameChanged(String value) {
+    final trimmed = value.trim();
+    _currentNickname = trimmed;
+    _requestVersion++; // 이전 요청의 응답을 무효화합니다.
+    if (_duplicatedNickname != null && trimmed == _duplicatedNickname) {
+      nicknameCheckStatus = CheckStatus.duplicated;
+      nicknameErrorText = '이미 사용 중인 닉네임입니다.';
+    } else {
+      nicknameCheckStatus = CheckStatus.idle;
+      nicknameErrorText = null;
+    }
+    if (!_disposed) notifyListeners();
+  }
+
+  void onEmailChanged(String value) {
+    final trimmed = value.trim();
+    _currentEmail = trimmed;
+    _requestVersion++;
+    if (_duplicatedEmail != null && trimmed == _duplicatedEmail) {
+      emailCheckStatus = CheckStatus.duplicated;
+      emailErrorText = '이미 사용 중인 이메일입니다.';
+    } else {
+      emailCheckStatus = CheckStatus.idle;
+      emailErrorText = null;
+    }
+    if (!_disposed) notifyListeners();
+  }
+
+  void onPasswordChanged() {
+    passwordErrorText = null;
+    notifyListeners();
+  }
+
+  Future<void> checkNickname(String value) async {
+    final requested = value.trim();
+    if (requested.isEmpty || requested != _currentNickname ||
+        !canCheckNickname) return;
+
+    final version = ++_requestVersion;
+    nicknameCheckStatus = CheckStatus.checking;
+    nicknameErrorText = null;
+    notifyListeners();
+
+    try {
+      if (requested == 'taken') {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (_disposed || version != _requestVersion || _currentNickname != requested) return;
+        nicknameCheckStatus = CheckStatus.duplicated;
+        nicknameErrorText = '이미 사용 중인 닉네임입니다.';
+        _duplicatedNickname = requested;
+        notifyListeners();
+        return;
+      }
+
+      if (requested == 'error') {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (_disposed || version != _requestVersion || _currentNickname != requested) return;
+        nicknameCheckStatus = CheckStatus.error;
+        nicknameErrorText = '중복 확인에 실패했습니다. 다시 시도해 주세요.';
+        notifyListeners();
+        return;
+      }
+
+      final available = await _service.checkNickname(requested);
+      if (_disposed || version != _requestVersion ||
+          _currentNickname != requested) return;
+      nicknameCheckStatus = available
+          ? CheckStatus.available : CheckStatus.duplicated;
+      nicknameErrorText = available
+          ? null : '이미 사용 중인 닉네임입니다.';
+      if (!available) _duplicatedNickname = requested;
+    } on DioException {
+      if (_disposed || version != _requestVersion ||
+          _currentNickname != requested) return;
+      nicknameCheckStatus = CheckStatus.error;
+      nicknameErrorText = '중복 확인에 실패했습니다. 다시 시도해 주세요.';
+    }
+    if (!_disposed && version == _requestVersion) notifyListeners();
+  }
+
+  Future<void> checkEmail(String value) async {
+    final requested = value.trim();
+    if (requested.isEmpty || requested != _currentEmail || !canCheckEmail) return;
+
+    final version = ++_requestVersion;
+    emailCheckStatus = CheckStatus.checking;
+    emailErrorText = null;
+    notifyListeners();
+
+    try {
+      final available = await _service.checkEmail(requested);
+      if (_disposed || version != _requestVersion || _currentEmail != requested) return;
+      emailCheckStatus = available ? CheckStatus.available : CheckStatus.duplicated;
+      emailErrorText = available ? null : '이미 사용 중인 이메일입니다.';
+      if (!available) _duplicatedEmail = requested;
+    } on DioException {
+      if (_disposed || version != _requestVersion || _currentEmail != requested) return;
+      emailCheckStatus = CheckStatus.error;
+      emailErrorText = '중복 확인에 실패했습니다. 다시 시도해 주세요.';
+    }
+    if (!_disposed && version == _requestVersion) notifyListeners();
+  }
+
+  // 7주차 회원가입 POST 제출 메서드
+  Future<void> submit(CreateMemberRequest request) async {
+    if (submitStatus == SubmitStatus.submitting) return;
+    submitStatus = SubmitStatus.submitting;
+    createdMemberId = null;
+    passwordErrorText = null;
+    snackbarMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _service.signUp(request);
+      final id = response.result?.memberId;
+      if (id == null) throw StateError('회원가입 결과에 memberId가 없습니다.');
+      createdMemberId = id;
+      submitStatus = SubmitStatus.success;
+    } on DioException catch (error) {
+      submitStatus = SubmitStatus.error;
+      final message = writeSignUpErrorMessage(error);
+      if (error.response?.statusCode == 400 && message.contains('비밀번호')) {
+        passwordErrorText = message;
+      } else {
+        snackbarMessage = message;
+      }
+    } on StateError {
+      submitStatus = SubmitStatus.error;
+      snackbarMessage = '가입 결과를 확인하지 못했습니다. 새 요청 전에 서버 상태를 확인해 주세요.';
+    }
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _requestVersion++;
+    super.dispose();
+  }
+}
+
+// 7주차 가이드에 맞춘 정교한 에러 메시지 핸들러 함수
+String writeSignUpErrorMessage(DioException error) {
+  final data = error.response?.data;
+  final common = data is Map<String, dynamic>
+      ? CommonResponse<Object?>.fromJson(data, (value) => value)
+      : null;
+  return common?.message ?? '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+}
