@@ -1,0 +1,840 @@
+﻿
+========== lib\widgets\movie_card.dart ==========
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/movie.dart';
+import '../themes/app_colors.dart';
+import '../widgets/tmdb_poster_image.dart';
+
+class MovieCard extends StatelessWidget {
+  const MovieCard({super.key, required this.movie});
+
+  final Movie movie;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/movies/${movie.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  //child: Image.asset(movie.posterAsset, fit: BoxFit.cover),
+                  child: TmdbPosterImage(
+                    posterPath: movie.posterPath, // TMDB ?ъ뒪??寃쎈줈 諛섏쁺
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 14),
+                        const SizedBox(width: 4),
+                        Text('${movie.rating}',
+                            style: const TextStyle(color: Colors.white, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            movie.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${movie.year} 쨌 ${movie.genre}',
+            style: const TextStyle(color: AppColors.gray, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+========== lib\screens\home_screen.dart ==========
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
+
+import '../view_models/movie_home_view_model.dart';
+
+import '../widgets/tmdb_poster_image.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<MovieHomeViewModel>(
+      builder: (context, viewModel, child) {
+        if (viewModel.status == MovieHomeLoadStatus.loading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (viewModel.status == MovieHomeLoadStatus.error) {
+          return Scaffold(
+            body: Center(
+              child: Text(
+                viewModel.message ?? '?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.',
+              ),
+            ),
+          );
+        }
+
+        if (viewModel.popular.isEmpty) {
+          return const Scaffold(
+            body: Center(
+              child: Text(
+                '?멸린 ?곹솕媛 ?놁뒿?덈떎.',
+              ),
+            ),
+          );
+        }
+
+        final featuredMovie = viewModel.popular.first;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'MovieLog',
+              style: TextStyle(
+                color: AppColors.violet,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: false,
+            actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.search,
+                  color: AppColors.violet,
+                ),
+                onPressed: () {},
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '?ㅻ뒛? ?대뼡\n?곹솕瑜?蹂쇨퉴??',
+                  style: AppTextStyles.titleLarge,
+                ),
+
+                const SizedBox(height: 24),
+
+                GestureDetector(
+                  onTap: () =>
+                      context.push('/movies/${featuredMovie.id}'),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      children: [
+                        TmdbPosterImage(
+                          posterPath: featuredMovie.posterPath,
+                          width: double.infinity,
+                          height: 480,
+                          fit: BoxFit.cover,
+                        ),
+
+                        Container(
+                          width: double.infinity,
+                          height: 480,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.8),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+
+                        Positioned(
+                          left: 24,
+                          right: 24,
+                          bottom: 24,
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.violet,
+                                  borderRadius:
+                                      BorderRadius.circular(16),
+                                ),
+                                child: const Text(
+                                  '異붿쿇 ?좎옉',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              Text(
+                                featuredMovie.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              Text(
+                                featuredMovie.releaseDate ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    context.push(
+                                      '/movies/${featuredMovie.id}',
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.info_outline,
+                                    color: Colors.white,
+                                  ),
+                                  label: const Text(
+                                    '?곸꽭蹂닿린',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  style:
+                                      ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        AppColors.violet,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                Row(
+                  mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '?멸린 ?곹솕',
+                      style: AppTextStyles.titleMediumB,
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        context.go('/movies');
+                      },
+                      child: const Text(
+                        '?꾩껜蹂닿린 >',
+                        style: TextStyle(
+                          color: AppColors.violet,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  height: 260,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: viewModel.popular.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final movie =
+                          viewModel.popular[index];
+
+                      return GestureDetector(
+                        onTap: () {
+                          context.push(
+                            '/movies/${movie.id}',
+                          );
+                        },
+                        child: SizedBox(
+                          width: 150,
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius:
+                                      BorderRadius.circular(12),
+                                  child: TmdbPosterImage(
+                                    posterPath:
+                                        movie.posterPath,
+                                    width: 150,
+                                    height: 220,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                movie.title,
+                                maxLines: 2,
+                                overflow:
+                                    TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+========== lib\router\app_router.dart ==========
+
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../data/services/tmdb_movie_service.dart';
+
+import '../view_models/movie_home_view_model.dart';
+import '../view_models/movie_list_view_model.dart';
+
+import '../screens/start_screen.dart';
+import '../screens/register_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/main_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/movie_list_screen.dart';
+import '../screens/movie_detail_screen.dart';
+
+class AppRouter {
+  AppRouter._();
+
+  static final router = GoRouter(
+    initialLocation: '/start',
+    routes: [
+      GoRoute(
+        path: '/start',
+        builder: (context, state) => const StartScreen(),
+      ),
+
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+
+      GoRoute(
+        path: '/movies/:movieId',
+        builder: (context, state) {
+          final movieId = int.tryParse(
+            state.pathParameters['movieId'] ?? '',
+          );
+
+          return MovieDetailScreen(
+            movieId: movieId,
+          );
+        },
+      ),
+
+      ShellRoute(
+        builder: (context, state, child) {
+          return TabScreen(
+            currentIndex: _indexFromLocation(
+              state.uri.path,
+            ),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) {
+              return ChangeNotifierProvider(
+                create: (context) =>
+                    MovieHomeViewModel(
+                      context.read<TmdbMovieService>(),
+                    )..loadPopular(),
+                child: const HomeScreen(),
+              );
+            },
+          ),
+
+          GoRoute(
+            path: '/movies',
+            builder: (context, state) {
+              return ChangeNotifierProvider(
+                create: (context) =>
+                    MovieListViewModel(
+                      context.read<TmdbMovieService>(),
+                    )..loadInitial(),
+                child: const MovieListScreen(),
+              );
+            },
+          ),
+
+          GoRoute(
+            path: '/my',
+            builder: (context, state) =>
+                const ProfileScreen(),
+          ),
+        ],
+      ),
+    ],
+  );
+
+  static int _indexFromLocation(String path) {
+    if (path.startsWith('/movies')) return 1;
+    if (path.startsWith('/my')) return 2;
+    return 0;
+  }
+}
+
+========== lib\screens\movie_detail_screen.dart ==========
+
+import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../models/movie.dart';
+import '../themes/app_colors.dart';
+import '../widgets/rating_dialog.dart';
+
+class MovieDetailScreen extends StatefulWidget {
+  final int? movieId;
+  const MovieDetailScreen({super.key, required this.movieId});
+
+  @override
+  State<MovieDetailScreen> createState() => _MovieDetailScreenState();
+}
+
+class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  bool isFavorite = false;
+  double userRating = 0.0;
+
+  void _toggleFavorite() {
+    setState(() => isFavorite = !isFavorite);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isFavorite ? '利먭꺼李얘린??異붽??섏뿀?듬땲??' : '利먭꺼李얘린?먯꽌 ?쒓굅?섏뿀?듬땲??'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _showRatingDialog() async {
+    final result = await showDialog<double>(
+      context: context,
+      builder: (_) => RatingDialog(initialRating: userRating),
+    );
+    if (result != null) setState(() => userRating = result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final movie = findMovieById(widget.movieId);
+    if (movie == null) {
+      return const Scaffold(
+        body: Center(child: Text('?곹솕瑜?李얠쓣 ???놁뒿?덈떎.')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Cinema Archive',
+          style: TextStyle(color: AppColors.violet, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        actions: [IconButton(icon: const Icon(Icons.share), onPressed: () {})],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _toggleFavorite,
+                  icon: Icon(
+                    isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                    color: AppColors.violet,
+                  ),
+                  label: const Text('利먭꺼李얘린', style: TextStyle(color: AppColors.violet)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.violet),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showRatingDialog,
+                  icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
+                  label: Text(
+                    userRating > 0 ? '???됱젏: $userRating' : '?됱젏 ?④린湲?,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.violet,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 諛곕꼫 ?대?吏
+            Container(
+              width: double.infinity,
+              height: 480,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(movie.bannerAsset ?? movie.posterAsset),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                ),
+              ),
+            ),
+            // ?곸꽭 ?뺣낫
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(movie.title,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${movie.year} 쨌 ${movie.genre} 쨌 ${movie.duration}遺?,
+                    style: const TextStyle(color: AppColors.gray),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      RatingBarIndicator(
+                        rating: movie.rating,
+                        itemBuilder: (context, index) =>
+                            const Icon(Icons.star, color: AppColors.violet),
+                        itemCount: 5,
+                        itemSize: 20.0,
+                      ),
+                      const SizedBox(width: 8),
+                      Text('${movie.rating}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text('?쒕냹?쒖뒪',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text(movie.synopsis, style: const TextStyle(height: 1.6)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+========== lib\data\models\tmdb_movie_dto.dart ==========
+
+import '../../models/movie.dart';
+
+class TmdbMovieDto {
+  const TmdbMovieDto({
+    required this.id,
+    required this.title,
+    required this.overview,
+    required this.posterPath,
+    required this.backdropPath,
+    required this.releaseDate,
+    required this.genreIds,
+    required this.voteAverage,
+    required this.popularity,
+  });
+
+  final int id;
+  final String title;
+  final String overview;
+  final String? posterPath;
+  final String? backdropPath;
+  final String? releaseDate;
+  final List<int> genreIds;
+  final double voteAverage;
+  final double popularity;
+
+  factory TmdbMovieDto.fromJson(Map<String, dynamic> json) {
+    return TmdbMovieDto(
+      id: (json['id'] as num).toInt(),
+      title: json['title'] as String? ?? '?쒕ぉ ?놁쓬',
+      overview: json['overview'] as String? ?? '',
+      posterPath: json['poster_path'] as String?,
+      backdropPath: json['backdrop_path'] as String?,
+      releaseDate: json['release_date'] as String?,
+      genreIds: (json['genre_ids'] as List<dynamic>? ?? const []).map((e) => (e as num).toInt()).toList(),
+      voteAverage: (json['vote_average'] as num? ?? 0).toDouble(),
+      popularity: (json['popularity'] as num? ?? 0).toDouble(),
+    );
+  }
+}
+
+extension TmdbMovieMapper on TmdbMovieDto {
+  Movie toDomain() {
+    return Movie(
+      id: id,
+      title: title,
+      originalTitle: title,
+      genre: genreIds.isNotEmpty ? genreIds.join(',') : '', // 媛꾨떒 留ㅽ븨 (?ㅼ젣??Genre API ?꾩슂)
+      year: int.tryParse(releaseDate?.split('-').first ?? '') ?? 0,
+      duration: 0, // TMDB 湲곕낯 ?묐떟?먮뒗 runtime ?놁쓬 ???곸꽭 API ?꾩슂
+      rating: voteAverage,
+      synopsis: overview,
+      posterAsset: '', // TMDB ?곗씠?곗뿉?쒕뒗 濡쒖뺄 ?먯뀑 ?ъ슜 ????
+      bannerAsset: backdropPath, // TMDB??backdropPath瑜?諛곕꼫濡??쒖슜 媛??
+      posterPath: posterPath, // ?ш린??TMDB ?ъ뒪??寃쎈줈瑜?Movie.posterPath??留ㅽ븨
+    );
+  }
+}
+
+
+========== lib\models\movie.dart ==========
+
+class Movie {
+  final int id;
+  final String title;
+  final String originalTitle;
+  final String genre;
+  final int year;
+  final int duration;
+  final double rating;
+  final String synopsis;
+  final String posterAsset; // ?몃줈 ?ъ뒪??(紐⑸줉??
+  final String? bannerAsset; // 媛濡?諛곕꼫 (?곸꽭?붾㈃ 諛???移대뱶??
+  final String? posterPath; // 異붽?
+
+  const Movie({
+    required this.id,
+    required this.title,
+    required this.originalTitle,
+    required this.genre,
+    required this.year,
+    required this.duration,
+    required this.rating,
+    required this.synopsis,
+    required this.posterAsset,
+    this.bannerAsset,
+    this.posterPath,
+  });
+}
+
+const List<Movie> mockMovies = [
+  Movie(
+    id: 1,
+    title: '蹂꾨튆 ?꾨옒 ?곕━',
+    originalTitle: 'US UNDER THE STARLIGHT',
+    genre: '濡쒕㎤???쒕씪留?,
+    year: 2023,
+    duration: 120,
+    rating: 4.5,
+    synopsis: '諛붿걶 ?꾨? ?ы쉶 ?띿뿉???쒕줈??議댁옱瑜??딄퀬 ?댁븘媛?????⑤?媛 ?곗뿰??怨꾧린濡??묒? 泥쒕Ц??먯꽌 留뚮굹寃??⑸땲?? 留ㅼ씪 諛?蹂꾩쓣 愿痢≫븯硫?怨쇨굅???곸쿂瑜?移섏쑀?섍퀬, 蹂꾩옄由ъ쿂??蹂?⑥뾾???쒕줈??紐⑥뒿???듯빐 ?ロ??덈뜕 留덉쓬??臾몄쓣 ?쒖꽌???댁뼱媛???곕쑜??濡쒕㎤???댁빞湲곗엯?덈떎.',
+    posterAsset: 'assets/images/poster_starlight.jpg',
+    bannerAsset: 'assets/images/hero_starlight.jpg',
+  ),
+  Movie(
+    id: 2,
+    title: '?곗＜???앹뿉??,
+    originalTitle: 'ECHOS OF THE VOID',
+    genre: 'SF',
+    year: 2024,
+    duration: 130,
+    rating: 4.2,
+    synopsis: '?몃쪟??留덉?留??щ쭩???덇퀬 誘몄????곗＜ 怨듦컙?쇰줈 ?좊궃 ?먰뿕??먮뱾??寃る뒗 寃쎌씠濡?퀬???섎궃???ъ젙??洹몃┰?덈떎. ?덉긽移?紐삵븳 ?꾪삊 ?띿뿉????먮뱾? ?앹〈???꾪븳 ?ы닾瑜?踰뚯씠硫? ?곗＜ 源딆? 怨녹뿉 ?쏀엺 嫄곕???鍮꾨?怨?留덉＜?섍쾶 ?섎뒗 SF ??묒엯?덈떎.',
+    posterAsset: 'assets/images/poster_void.jpg',
+  ),
+  Movie(
+    id: 3,
+    title: '湲곗뼲????,
+    originalTitle: 'WHISPERING WOODS',
+    genre: '?좊땲硫붿씠??,
+    year: 2022,
+    duration: 110,
+    rating: 4.9,
+    synopsis: '?곗뿰???좊퉬濡쒖슫 ?뺣졊?ㅼ씠 ?닿퀬 ?덈뒗 湲곗뼲???뀁뿉 諛쒖쓣 ?ㅼ씤 二쇱씤怨듭씠 ?껋뼱踰꾨┛ ?먯떊??怨쇨굅? 留덉＜?섎뒗 紐⑦뿕???댁븯?듬땲?? ?좊퉬濡쒖슫 留덈쾿怨??곕쑜???곗젙???댁슦?ъ쭊 ?뀁냽 ?ъ젙???듯빐 吏꾩젙???먯븘瑜?李얠븘媛??媛먮룞?곸씤 ?좊땲硫붿씠?섏엯?덈떎.',
+    posterAsset: 'assets/images/poster_woods.jpg',
+  ),
+  Movie(
+    id: 4,
+    title: '諛ㅼ쓽 洹몃┝??,
+    originalTitle: 'NIGHT SHADOWS',
+    genre: '?ㅻ┫??,
+    year: 2024,
+    duration: 145,
+    rating: 3.8,
+    synopsis: '?붾젮???ㅼ삩?ъ씤 ?ㅼ뿉 ?④꺼吏??꾩떆???대몺 ?띿뿉???곗뇙?곸쑝濡?踰뚯뼱吏??誘몄뒪?곕━???ш굔?ㅼ쓣 ?뚰뿤移섎뒗 ?뺤궗???댁빞湲곗엯?덈떎. ?⑥꽌媛 ?щ씪吏?誘멸턿???ш굔??已볦쑝硫??앹뾾??異붽꺽?꾩씠 ?댁뼱吏怨? ?곸긽議곗감 ?섏? 紐삵븳 異⑷꺽?곸씤 吏꾩떎怨?留덉＜?섍쾶 ?섎뒗 ??留됲엳???ㅻ┫?ъ엯?덈떎.',
+    posterAsset: 'assets/images/poster_shadows.jpg',
+  ),
+];
+
+Movie? findMovieById(int? id) {
+  for (final movie in mockMovies) {
+    if (movie.id == id) return movie;
+  }
+  return null;
+}
+
+
+========== lib\widgets\movie_rating_input.dart ==========
+
+import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../themes/app_colors.dart';
+
+class RatingInput extends StatelessWidget {
+  const RatingInput({
+    super.key,
+    required this.initialRating,
+    required this.onChanged,
+  });
+
+  final double initialRating;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return RatingBar.builder(
+      initialRating: initialRating,
+      minRating: 0.5,
+      allowHalfRating: true,
+      itemCount: 5,
+      itemBuilder: (context, _) => const Icon(Icons.star, color: AppColors.violet),
+      onRatingUpdate: onChanged,
+    );
+  }
+}
+
+
+========== lib\widgets\rating_dialog.dart ==========
+
+import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import 'movie_rating_input.dart';
+
+class RatingDialog extends StatefulWidget {
+  const RatingDialog({super.key, required this.initialRating});
+
+  final double initialRating;
+
+  @override
+  State<RatingDialog> createState() => _RatingDialogState();
+}
+
+class _RatingDialogState extends State<RatingDialog> {
+  late double tempRating;
+
+  @override
+  void initState() {
+    super.initState();
+    tempRating = widget.initialRating;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('?곹솕???대뼚?⑤굹??', style: TextStyle(fontWeight: FontWeight.bold)),
+      content: RatingInput(
+        initialRating: tempRating,
+        onChanged: (rating) => setState(() => tempRating = rating),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('痍⑥냼', style: TextStyle(color: AppColors.gray)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.violet,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context, tempRating),
+          child: const Text('?뺤씤'),
+        ),
+      ],
+    );
+  }
+}
+
